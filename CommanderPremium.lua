@@ -759,16 +759,32 @@ function createMainGUI()
     end
 end
 
-print("✅ ПРЕМИУМ ХАБ ЗАГРУЖЕН! Ключ: 9866") 
+print("✅ ПРЕМИУМ ХАБ ЗАГРУЖЕН! Ключ: 9866")
 
--- ========== МИНИМАЛЬНЫЙ ФИКС ==========
+-- ========== ПРОСТОЙ ФИКС ДЛЯ ИКОНКИ ==========
 spawn(function()
-    wait(2) -- Ждем загрузки
-    local icon = game:CoreGui:FindFirstChild("CommanderPremium") and game:CoreGui.CommanderPremium:FindFirstChild("IconButton")
-    local frame = game:CoreGui:FindFirstChild("CommanderPremium") and game:CoreGui.CommanderPremium:FindFirstChild("MainFrame")
+    wait(1) -- Ждем появления иконки
     
-    if icon and frame then
-        icon.Activated = function()
+    local icon = game:CoreGui:FindFirstChild("CommanderPremium") and 
+                 game:CoreGui.CommanderPremium:FindFirstChild("IconButton")
+    
+    if icon then
+        -- Очищаем все старые соединения
+        for _, connection in pairs(getconnections(icon.MouseButton1Click)) do
+            connection:Disable()
+        end
+        
+        -- Создаем новое простое соединение
+        icon.MouseButton1Click:Connect(function()
+            local mainFrame = game:CoreGui.CommanderPremium:FindFirstChild("MainFrame")
+            if mainFrame then
+                mainFrame.Visible = not mainFrame.Visible
+            end
+        end)
+        
+        print("✅ Иконка исправлена")
+    end
+end)
             frame.Visible = not frame.Visible
         end
     end
