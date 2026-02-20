@@ -759,40 +759,34 @@ function createMainGUI()
     end
 end
 
-print("✅ ПРЕМИУМ ХАБ ЗАГРУЖЕН! Ключ: 9866") -- ========== ФИНАЛЬНЫЙ ФИКС ДЛЯ КЛИКА ==========
+print("✅ ПРЕМИУМ ХАБ ЗАГРУЖЕН! Ключ: 9866") -- ========== КАРДИНАЛЬНЫЙ ФИКС КЛИКА ==========
 pcall(function()
     -- Ждем появления интерфейса
     repeat wait() until game:CoreGui:FindFirstChild("CommanderPremium")
     
     local icon = game:CoreGui.CommanderPremium:FindFirstChild("IconButton")
-    if icon then
-        -- Удаляем старые соединения (если были)
-        icon.MouseButton1Click:Disconnect()
-        icon.MouseButton1Down:Disconnect()
-        icon.MouseButton1Up:Disconnect()
+    local mainFrame = game:CoreGui.CommanderPremium:FindFirstChild("MainFrame")
+    
+    if icon and mainFrame then
+        -- Удаляем все старые соединения
+        for _, event in pairs({icon:GetConnectedEvents()}) do
+            event:Disconnect()
+        end
         
-        -- Добавляем ВСЕ возможные события для надежности
-        icon.MouseButton1Click:Connect(function()
-            local mainFrame = game:CoreGui.CommanderPremium:FindFirstChild("MainFrame")
-            if mainFrame then
+        -- Способ 1: Через InputBegan (работает почти везде)
+        icon.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                 mainFrame.Visible = not mainFrame.Visible
             end
         end)
         
-        icon.MouseButton1Down:Connect(function()
-            local mainFrame = game:CoreGui.CommanderPremium:FindFirstChild("MainFrame")
-            if mainFrame then
-                mainFrame.Visible = not mainFrame.Visible
-            end
+        -- Способ 2: Через Activate (для совместимости)
+        icon.Activated:Connect(function()
+            mainFrame.Visible = not mainFrame.Visible
         end)
         
-        icon.TouchTap:Connect(function()
-            local mainFrame = game:CoreGui.CommanderPremium:FindFirstChild("MainFrame")
-            if mainFrame then
-                mainFrame.Visible = not mainFrame.Visible
-            end
-        end)
+        print("✅ ИКОНКА АКТИВИРОВАНА")
+    else
+        warn("Не найдена иконка или главное окно!")
     end
 end)
-
-print("✅ ФИКС КЛИКА АКТИВИРОВАН")
