@@ -461,8 +461,8 @@ function createMainGUI()
         toggle.BackgroundTransparency = 1
         toggle.Size = UDim2.new(0, 30, 0, 30)
         toggle.Position = UDim2.new(1, -40, 0.5, -15)
-        toggle.Image = settings[setting] and "rbxassetid://7024467922" or "rbxassetid://7024467305"
-        toggle.ImageColor3 = settings[setting] and Color3.fromRGB(0, 255, 100) or Color3.fromRGB(255, 80, 80)
+        toggle.Image = "rbxassetid://7024467305"  -- OFF
+        toggle.ImageColor3 = Color3.fromRGB(255, 80, 80)
         toggle.ZIndex = 9
 
         toggle.MouseButton1Click:Connect(function()
@@ -717,4 +717,5 @@ function createMainGUI()
     MinimizeBtn.MouseButton1Click:Connect(function()
         isOpen = false
         TweenService:Create(MainFrame, tweenInfo, {
-            Size = UDim2.new(0, 0, 0, 0
+            Size = UDim2.new(0, 0, 0, 0),
+            Position = U
