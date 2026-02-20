@@ -759,7 +759,9 @@ function createMainGUI()
     end
 end
 
-print("✅ ПРЕМИУМ ХАБ ЗАГРУЖЕН! Ключ: 9866") -- ========== КАРДИНАЛЬНЫЙ ФИКС КЛИКА ==========
+print("✅ ПРЕМИУМ ХАБ ЗАГРУЖЕН! Ключ: 9866")
+
+-- ========== КАРДИНАЛЬНЫЙ ФИКС КЛИКА ==========
 pcall(function()
     -- Ждем появления интерфейса
     repeat wait() until game:CoreGui:FindFirstChild("CommanderPremium")
