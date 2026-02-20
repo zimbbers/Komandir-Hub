@@ -1,29 +1,26 @@
 --[[
-    ⚡ КОМАНДИР ХАБ ПРЕМИУМ ⚡
-    Версия: 4.0 FINAL
-    Статус: 🔒 ПОЛНОСТЬЮ РАБОЧАЯ ВЕРСИЯ
+    ⚡ КОМАНДИР ХАБ XENO EDITION ⚡
+    Версия: 6.0
+    Статус: ОПТИМИЗИРОВАН ПОД XENO
 --]]
 
 repeat wait() until game:IsLoaded() and game.Players.LocalPlayer
 
 local player = game.Players.LocalPlayer
-local mouse = player:GetMouse()
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 
--- ========== СИСТЕМА КЛЮЧЕЙ ==========
+-- ========== ПЕРЕМЕННЫЕ ==========
 local REQUIRED_KEY = "9866"
 local IS_AUTHORIZED = false
+local GUI = nil
+local IconButton = nil
+local MainFrame = nil
 
--- Создаем GUI для ввода ключа
+-- ========== КРАСИВАЯ ЗАСТАВКА ==========
 local KeyGUI = Instance.new("ScreenGui")
-local KeyFrame = Instance.new("Frame")
-local KeyTitle = Instance.new("TextLabel")
-local KeyBox = Instance.new("TextBox")
-local KeyButton = Instance.new("TextButton")
-local KeyError = Instance.new("TextLabel")
-
-KeyGUI.Name = "KeySystem"
+KeyGUI.Name = "CommanderKeySystem"
 KeyGUI.Parent = game.CoreGui
 KeyGUI.ResetOnSpawn = false
 KeyGUI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
@@ -36,39 +33,45 @@ BlackBG.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 BlackBG.BackgroundTransparency = 0.5
 BlackBG.Size = UDim2.new(1, 0, 1, 0)
 BlackBG.Active = true
-BlackBG.ZIndex = 998
 
--- Окно ввода ключа
+-- Окно ключа
+local KeyFrame = Instance.new("Frame")
 KeyFrame.Parent = KeyGUI
-KeyFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+KeyFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
 KeyFrame.Position = UDim2.new(0.5, -200, 0.5, -150)
 KeyFrame.Size = UDim2.new(0, 400, 0, 300)
 KeyFrame.Active = true
 KeyFrame.ClipsDescendants = true
-KeyFrame.ZIndex = 999
 
 local UICorner = Instance.new("UICorner")
 UICorner.CornerRadius = UDim.new(0, 20)
 UICorner.Parent = KeyFrame
 
+-- Неоновая обводка
+local UIStroke = Instance.new("UIStroke")
+UIStroke.Thickness = 3
+UIStroke.Color = Color3.fromRGB(255, 50, 50)
+UIStroke.Transparency = 0.3
+UIStroke.Parent = KeyFrame
+
 -- Заголовок
+local KeyTitle = Instance.new("TextLabel")
 KeyTitle.Parent = KeyFrame
-KeyTitle.BackgroundColor3 = Color3.fromRGB(35, 35, 50)
+KeyTitle.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
 KeyTitle.Size = UDim2.new(1, 0, 0, 60)
 KeyTitle.Font = Enum.Font.GothamBold
 KeyTitle.Text = "⚡ ПРЕМИУМ ДОСТУП ⚡"
 KeyTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
 KeyTitle.TextSize = 24
 
-UICorner = Instance.new("UICorner")
-UICorner.CornerRadius = UDim.new(0, 20)
-UICorner.Parent = KeyTitle
+local TitleCorner = Instance.new("UICorner")
+TitleCorner.CornerRadius = UDim.new(0, 20)
+TitleCorner.Parent = KeyTitle
 
--- Градиент для заголовка
 local TitleGradient = Instance.new("UIGradient")
 TitleGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 100, 100)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 100, 255))
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 50, 50)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 50, 255))
 })
 TitleGradient.Parent = KeyTitle
 
@@ -80,12 +83,13 @@ KeyInstruction.Position = UDim2.new(0, 0, 0, 80)
 KeyInstruction.Size = UDim2.new(1, 0, 0, 40)
 KeyInstruction.Font = Enum.Font.Gotham
 KeyInstruction.Text = "ВВЕДИ КЛЮЧ ДОСТУПА"
-KeyInstruction.TextColor3 = Color3.fromRGB(200, 200, 200)
+KeyInstruction.TextColor3 = Color3.fromRGB(180, 180, 180)
 KeyInstruction.TextSize = 16
 
 -- Поле ввода
+local KeyBox = Instance.new("TextBox")
 KeyBox.Parent = KeyFrame
-KeyBox.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+KeyBox.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
 KeyBox.Position = UDim2.new(0.1, 0, 0, 140)
 KeyBox.Size = UDim2.new(0.8, 0, 0, 50)
 KeyBox.Font = Enum.Font.Gotham
@@ -95,13 +99,14 @@ KeyBox.TextColor3 = Color3.fromRGB(255, 255, 255)
 KeyBox.TextSize = 24
 KeyBox.ClearTextOnFocus = false
 
-UICorner = Instance.new("UICorner")
-UICorner.CornerRadius = UDim.new(0, 10)
-UICorner.Parent = KeyBox
+local BoxCorner = Instance.new("UICorner")
+BoxCorner.CornerRadius = UDim.new(0, 10)
+BoxCorner.Parent = KeyBox
 
--- Кнопка подтверждения
+-- Кнопка
+local KeyButton = Instance.new("TextButton")
 KeyButton.Parent = KeyFrame
-KeyButton.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
+KeyButton.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
 KeyButton.Position = UDim2.new(0.25, 0, 0, 210)
 KeyButton.Size = UDim2.new(0.5, 0, 0, 50)
 KeyButton.Font = Enum.Font.GothamBold
@@ -109,187 +114,253 @@ KeyButton.Text = "АКТИВИРОВАТЬ"
 KeyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 KeyButton.TextSize = 18
 
-UICorner = Instance.new("UICorner")
-UICorner.CornerRadius = UDim.new(0, 10)
-UICorner.Parent = KeyButton
+local ButtonCorner = Instance.new("UICorner")
+ButtonCorner.CornerRadius = UDim.new(0, 10)
+ButtonCorner.Parent = KeyButton
 
--- Сообщение об ошибке
+-- Ошибка
+local KeyError = Instance.new("TextLabel")
 KeyError.Parent = KeyFrame
 KeyError.BackgroundTransparency = 1
 KeyError.Position = UDim2.new(0, 0, 0, 270)
 KeyError.Size = UDim2.new(1, 0, 0, 20)
 KeyError.Font = Enum.Font.Gotham
 KeyError.Text = ""
-KeyError.TextColor3 = Color3.fromRGB(255, 80, 80)
+KeyError.TextColor3 = Color3.fromRGB(255, 50, 50)
 KeyError.TextSize = 14
 
 -- ========== ПРОВЕРКА КЛЮЧА ==========
 KeyButton.MouseButton1Click:Connect(function()
     local enteredKey = KeyBox.Text:gsub("%s+", "")
-
+    
     if enteredKey == REQUIRED_KEY then
         IS_AUTHORIZED = true
         KeyButton.Text = "✓ УСПЕХ!"
-        KeyButton.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
+        KeyButton.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
         KeyError.Text = ""
-
+        
+        -- Анимация закрытия
         TweenService:Create(KeyFrame, TweenInfo.new(0.5), {Size = UDim2.new(0, 0, 0, 0)}):Play()
         TweenService:Create(BlackBG, TweenInfo.new(0.5), {BackgroundTransparency = 1}):Play()
-
+        
         wait(0.5)
         KeyGUI:Destroy()
-        wait(0.1)
+        wait(0.2)
         createMainGUI()
     else
         KeyError.Text = "❌ НЕВЕРНЫЙ КЛЮЧ!"
         KeyBox.Text = ""
-        TweenService:Create(KeyBox, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(255, 80, 80)}):Play()
+        TweenService:Create(KeyBox, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(255, 50, 50)}):Play()
         wait(0.1)
-        TweenService:Create(KeyBox, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(30, 30, 40)}):Play()
+        TweenService:Create(KeyBox, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(25, 25, 30)}):Play()
     end
 end)
 
 KeyBox.FocusLost:Connect(function(enterPressed)
     if enterPressed then KeyButton.MouseButton1Click:Wait() end
-end) -- ========== ФУНКЦИЯ СОЗДАНИЯ ОСНОВНОГО ИНТЕРФЕЙСА ==========
+end) -- ========== СОЗДАНИЕ ГЛАВНОГО ИНТЕРФЕЙСА ==========
 function createMainGUI()
     local tweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
     local tweenInfo2 = TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-
-    local GUI = Instance.new("ScreenGui")
-    local IconButton = Instance.new("ImageButton")
-    local MainFrame = Instance.new("Frame")
-    local TitleBar = Instance.new("Frame")
-    local TitleText = Instance.new("TextLabel")
-    local CloseBtn = Instance.new("ImageButton")
-    local MinimizeBtn = Instance.new("ImageButton")
-    local TabFrame = Instance.new("Frame")
-    local TabContainer = Instance.new("Frame")
-    local TabHolder = Instance.new("Folder")
-
+    
+    GUI = Instance.new("ScreenGui")
     GUI.Name = "CommanderPremium"
     GUI.Parent = game.CoreGui
     GUI.ResetOnSpawn = false
     GUI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     GUI.DisplayOrder = 999
-
-    -- ИКОНКА
+    
+    -- ========== НОВАЯ КРУТАЯ ИКОНКА С ПУЛЬСАЦИЕЙ ==========
+    IconButton = Instance.new("ImageButton")
     IconButton.Parent = GUI
     IconButton.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
     IconButton.BackgroundTransparency = 0.2
     IconButton.Position = UDim2.new(0.02, 0, 0.5, -30)
-    IconButton.Size = UDim2.new(0, 60, 0, 60)
-    IconButton.Image = "rbxassetid://3926305904"
-    IconButton.ImageColor3 = Color3.fromRGB(255, 100, 100)
+    IconButton.Size = UDim2.new(0, 65, 0, 65) -- Чуть больше
+    IconButton.Image = "rbxassetid://3926305904" -- Красный бриллиант
+    IconButton.ImageColor3 = Color3.fromRGB(255, 30, 30)
+    IconButton.ScaleType = Enum.ScaleType.Fit
     IconButton.Draggable = true
     IconButton.Active = true
     IconButton.ZIndex = 999
-
+    
+    -- Сглаживание
     local IconCorner = Instance.new("UICorner")
-    IconCorner.CornerRadius = UDim.new(0, 20)
+    IconCorner.CornerRadius = UDim.new(0, 25)
     IconCorner.Parent = IconButton
-
+    
+    -- Неоновая обводка для иконки
+    local IconStroke = Instance.new("UIStroke")
+    IconStroke.Thickness = 3
+    IconStroke.Color = Color3.fromRGB(255, 0, 0)
+    IconStroke.Transparency = 0.3
+    IconStroke.Parent = IconButton
+    
+    -- Градиент для иконки
     local IconGradient = Instance.new("UIGradient")
     IconGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 80, 80)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 150, 150))
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 100, 100))
     })
     IconGradient.Parent = IconButton
-
-    -- ГЛАВНОЕ ОКНО
+    
+    -- Эффект пульсации
+    spawn(function()
+        while GUI and GUI.Parent do
+            for i = 1, 10 do
+                IconButton.Size = UDim2.new(0, 65 + i, 0, 65 + i)
+                IconStroke.Transparency = 0.3 - (i * 0.02)
+                wait(0.02)
+            end
+            for i = 10, 1, -1 do
+                IconButton.Size = UDim2.new(0, 65 + i, 0, 65 + i)
+                IconStroke.Transparency = 0.3 - (i * 0.02)
+                wait(0.02)
+            end
+            wait(1)
+        end
+    end)
+    
+    -- ========== ТРОЙНАЯ СИСТЕМА КЛИКА ==========
+    -- Способ 1: MouseButton1Click (стандарт)
+    IconButton.MouseButton1Click:Connect(function()
+        if MainFrame then
+            MainFrame.Visible = not MainFrame.Visible
+        end
+    end)
+    
+    -- Способ 2: Activated (универсальный)
+    IconButton.Activated:Connect(function()
+        if MainFrame then
+            MainFrame.Visible = not MainFrame.Visible
+        end
+    end)
+    
+    -- Способ 3: InputBegan (для Xeno)
+    IconButton.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+           input.UserInputType == Enum.UserInputType.Touch then
+            if MainFrame then
+                MainFrame.Visible = not MainFrame.Visible
+            end
+        end
+    end)
+    
+    -- Защита от сброса (если Xeno перезагружает GUI)
+    spawn(function()
+        while GUI and GUI.Parent do
+            wait(2)
+            if IconButton and not IconButton:FindFirstChildOfClass("UICorner") then
+                -- Если иконка потеряла свойства, восстанавливаем
+                if not IconButton:FindFirstChildOfClass("UICorner") then
+                    local newCorner = Instance.new("UICorner")
+                    newCorner.CornerRadius = UDim.new(0, 25)
+                    newCorner.Parent = IconButton
+                end
+            end
+        end
+    end)
+    
+    -- ========== ГЛАВНОЕ ОКНО ==========
+    MainFrame = Instance.new("Frame")
     MainFrame.Parent = GUI
-    MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
     MainFrame.BackgroundTransparency = 0.1
     MainFrame.Position = UDim2.new(0.5, -300, 0.5, -250)
     MainFrame.Size = UDim2.new(0, 600, 0, 500)
     MainFrame.Visible = false
     MainFrame.ClipsDescendants = true
     MainFrame.Active = true
-
+    
     local MainCorner = Instance.new("UICorner")
     MainCorner.CornerRadius = UDim.new(0, 20)
     MainCorner.Parent = MainFrame
-
+    
     local MainStroke = Instance.new("UIStroke")
     MainStroke.Thickness = 2
-    MainStroke.Color = Color3.fromRGB(255, 100, 100)
+    MainStroke.Color = Color3.fromRGB(255, 30, 30)
     MainStroke.Transparency = 0.5
     MainStroke.Parent = MainFrame
-
+    
     local MainGradient = Instance.new("UIGradient")
     MainGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(30, 30, 45)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 20, 35))
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(25, 25, 35)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(15, 15, 25))
     })
     MainGradient.Parent = MainFrame
-
-    -- ЗАГОЛОВОК
+    
+    -- ========== ЗАГОЛОВОК ==========
+    local TitleBar = Instance.new("Frame")
     TitleBar.Parent = MainFrame
-    TitleBar.BackgroundColor3 = Color3.fromRGB(35, 35, 50)
+    TitleBar.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
     TitleBar.Size = UDim2.new(1, 0, 0, 50)
-
+    
     local TitleCorner = Instance.new("UICorner")
     TitleCorner.CornerRadius = UDim.new(0, 20)
     TitleCorner.Parent = TitleBar
-
+    
+    local TitleText = Instance.new("TextLabel")
     TitleText.Parent = TitleBar
     TitleText.BackgroundTransparency = 1
     TitleText.Size = UDim2.new(1, -100, 1, 0)
     TitleText.Position = UDim2.new(0, 20, 0, 0)
     TitleText.Font = Enum.Font.GothamBold
-    TitleText.Text = "⚡ КОМАНДИР ХАБ ПРЕМИУМ ⚡"
+    TitleText.Text = "⚡ КОМАНДИР ХАБ XENO ⚡"
     TitleText.TextColor3 = Color3.fromRGB(255, 255, 255)
     TitleText.TextSize = 20
     TitleText.TextXAlignment = Enum.TextXAlignment.Left
-
+    
     local TitleGradient = Instance.new("UIGradient")
     TitleGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 100, 100)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 100, 255))
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 30, 30)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 30, 255))
     })
     TitleGradient.Parent = TitleText
-
-    -- КНОПКИ УПРАВЛЕНИЯ
+    
+    -- Кнопки
+    local CloseBtn = Instance.new("ImageButton")
     CloseBtn.Parent = TitleBar
     CloseBtn.BackgroundTransparency = 1
     CloseBtn.Size = UDim2.new(0, 30, 0, 30)
     CloseBtn.Position = UDim2.new(1, -40, 0.5, -15)
     CloseBtn.Image = "rbxassetid://5054663650"
-    CloseBtn.ImageColor3 = Color3.fromRGB(255, 80, 80)
-
+    CloseBtn.ImageColor3 = Color3.fromRGB(255, 50, 50)
+    
+    local MinimizeBtn = Instance.new("ImageButton")
     MinimizeBtn.Parent = TitleBar
     MinimizeBtn.BackgroundTransparency = 1
     MinimizeBtn.Size = UDim2.new(0, 30, 0, 30)
     MinimizeBtn.Position = UDim2.new(1, -80, 0.5, -15)
     MinimizeBtn.Image = "rbxassetid://2406617031"
-    MinimizeBtn.ImageColor3 = Color3.fromRGB(255, 255, 255)
-
-    -- ВКЛАДКИ
+    MinimizeBtn.ImageColor3 = Color3.fromRGB(255, 255, 255)     -- ========== ВКЛАДКИ ==========
+    local TabFrame = Instance.new("Frame")
     TabFrame.Parent = MainFrame
-    TabFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+    TabFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
     TabFrame.Position = UDim2.new(0, 0, 0, 50)
     TabFrame.Size = UDim2.new(1, 0, 1, -50)
-
+    
+    local TabContainer = Instance.new("Frame")
     TabContainer.Parent = TabFrame
     TabContainer.BackgroundTransparency = 1
     TabContainer.Position = UDim2.new(0, 10, 0, 10)
     TabContainer.Size = UDim2.new(0, 180, 1, -20)
-
+    
+    local TabHolder = Instance.new("Frame")
     TabHolder.Parent = TabFrame
     TabHolder.BackgroundTransparency = 1
     TabHolder.Position = UDim2.new(0, 200, 0, 10)
     TabHolder.Size = UDim2.new(1, -210, 1, -20)
     TabHolder.ClipsDescendants = true
-
+    
     -- ТАБЫ
     local tabs = {"💢 ФАРМ", "🌀 ТЕЛЕПОРТ", "⚙️ РАЗНОЕ", "🔧 НАСТРОЙКИ"}
     local tabButtons = {}
     local tabContents = {}
-
+    
     for i, tabName in ipairs(tabs) do
         local btn = Instance.new("TextButton")
         btn.Parent = TabContainer
-        btn.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+        btn.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
         btn.BackgroundTransparency = 0.3
         btn.Size = UDim2.new(1, 0, 0, 45)
         btn.Position = UDim2.new(0, 0, 0, (i-1) * 55)
@@ -297,217 +368,41 @@ function createMainGUI()
         btn.Text = tabName
         btn.TextColor3 = Color3.fromRGB(255, 255, 255)
         btn.TextSize = 16
-
+        
         local btnCorner = Instance.new("UICorner")
         btnCorner.CornerRadius = UDim.new(0, 12)
         btnCorner.Parent = btn
-
-        local btnGradient = Instance.new("UIGradient")
-        btnGradient.Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Color3.fromRGB(45, 45, 60)),
-            ColorSequenceKeypoint.new(1, Color3.fromRGB(35, 35, 50))
-        })
-        btnGradient.Parent = btn
-
+        
         local container = Instance.new("ScrollingFrame")
         container.Parent = TabHolder
-        container.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+        container.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
         container.BackgroundTransparency = 0.2
         container.Size = UDim2.new(1, 0, 1, 0)
-        container.Position = UDim2.new(0, 0, 0, 0)
         container.Visible = (i == 1)
         container.CanvasSize = UDim2.new(0, 0, 0, 0)
         container.ScrollBarThickness = 6
-
+        
         local containerCorner = Instance.new("UICorner")
         containerCorner.CornerRadius = UDim.new(0, 15)
         containerCorner.Parent = container
-
+        
         tabButtons[i] = btn
         tabContents[i] = container
-
+        
         btn.MouseButton1Click:Connect(function()
             for j = 1, #tabContents do
                 tabContents[j].Visible = (j == i)
                 TweenService:Create(tabButtons[j], TweenInfo.new(0.3), {
-                    BackgroundColor3 = (j == i) and Color3.fromRGB(255, 100, 100) or Color3.fromRGB(35, 35, 45),
-                    TextColor3 = (j == i) and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 200, 200)
+                    BackgroundColor3 = (j == i) and Color3.fromRGB(255, 50, 50) or Color3.fromRGB(30, 30, 35)
                 }):Play()
             end
         end)
-    end     -- ========== ФУНКЦИИ СОЗДАНИЯ ЭЛЕМЕНТОВ ==========
-    function createButton(parent, text, callback)
-        local yOffset = (#parent:GetChildren() * 50) + 10
-        local btn = Instance.new("TextButton")
-        btn.Parent = parent
-        btn.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
-        btn.Size = UDim2.new(0.9, 0, 0, 40)
-        btn.Position = UDim2.new(0.05, 0, 0, yOffset)
-        btn.Font = Enum.Font.Gotham
-        btn.Text = text
-        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-        btn.TextSize = 14
-
-        local btnCorner = Instance.new("UICorner")
-        btnCorner.CornerRadius = UDim.new(0, 10)
-        btnCorner.Parent = btn
-
-        local btnStroke = Instance.new("UIStroke")
-        btnStroke.Thickness = 1
-        btnStroke.Color = Color3.fromRGB(255, 100, 100)
-        btnStroke.Transparency = 0.7
-        btnStroke.Parent = btn
-
-        btn.MouseButton1Click:Connect(callback)
-
-        btn.MouseEnter:Connect(function()
-            TweenService:Create(btn, TweenInfo.new(0.2), {Size = UDim2.new(0.92, 0, 0, 42)}):Play()
-        end)
-
-        btn.MouseLeave:Connect(function()
-            TweenService:Create(btn, TweenInfo.new(0.2), {Size = UDim2.new(0.9, 0, 0, 40)}):Play()
-        end)
-
-        parent.CanvasSize = UDim2.new(0, 0, 0, yOffset + 60)
-        return btn
     end
-
-    function createToggle(parent, text, setting)
-        local yOffset = (#parent:GetChildren() * 50) + 10
-        local frame = Instance.new("Frame")
-        frame.Parent = parent
-        frame.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
-        frame.Size = UDim2.new(0.9, 0, 0, 40)
-        frame.Position = UDim2.new(0.05, 0, 0, yOffset)
-
-        local frameCorner = Instance.new("UICorner")
-        frameCorner.CornerRadius = UDim.new(0, 10)
-        frameCorner.Parent = frame
-
-        local label = Instance.new("TextLabel")
-        label.Parent = frame
-        label.BackgroundTransparency = 1
-        label.Size = UDim2.new(0.6, 0, 1, 0)
-        label.Position = UDim2.new(0, 15, 0, 0)
-        label.Font = Enum.Font.Gotham
-        label.Text = text
-        label.TextColor3 = Color3.fromRGB(255, 255, 255)
-        label.TextSize = 14
-        label.TextXAlignment = Enum.TextXAlignment.Left
-
-        local toggle = Instance.new("ImageButton")
-        toggle.Parent = frame
-        toggle.BackgroundTransparency = 1
-        toggle.Size = UDim2.new(0, 30, 0, 30)
-        toggle.Position = UDim2.new(1, -40, 0.5, -15)
-        toggle.Image = "rbxassetid://7024467305"
-        toggle.ImageColor3 = Color3.fromRGB(255, 80, 80)
-
-        toggle.MouseButton1Click:Connect(function()
-            settings[setting] = not settings[setting]
-            toggle.Image = settings[setting] and "rbxassetid://7024467922" or "rbxassetid://7024467305"
-            toggle.ImageColor3 = settings[setting] and Color3.fromRGB(0, 255, 100) or Color3.fromRGB(255, 80, 80)
-
-            if setting == "AutoFarm" and settings.AutoFarm then startAutoFarm() end
-            if setting == "AutoFruit" and settings.AutoFruit then startAutoFruit() end
-            if setting == "ESP" and settings.ESP then startESP() else stopESP() end
-            if setting == "SpeedHack" and settings.SpeedHack then startSpeedHack() end
-            if setting == "NoClip" and settings.NoClip then startNoClip() end
-            if setting == "GodMode" and settings.GodMode then startGodMode() end
-        end)
-
-        parent.CanvasSize = UDim2.new(0, 0, 0, yOffset + 60)
-        return frame
-    end
-
-    function createSlider(parent, text, min, max, setting)
-        local yOffset = (#parent:GetChildren() * 60) + 10
-        local frame = Instance.new("Frame")
-        frame.Parent = parent
-        frame.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
-        frame.Size = UDim2.new(0.9, 0, 0, 50)
-        frame.Position = UDim2.new(0.05, 0, 0, yOffset)
-
-        local frameCorner = Instance.new("UICorner")
-        frameCorner.CornerRadius = UDim.new(0, 10)
-        frameCorner.Parent = frame
-
-        local label = Instance.new("TextLabel")
-        label.Parent = frame
-        label.BackgroundTransparency = 1
-        label.Size = UDim2.new(1, -20, 0.4, 0)
-        label.Position = UDim2.new(0, 10, 0, 5)
-        label.Font = Enum.Font.Gotham
-        label.Text = text .. ": " .. settings[setting]
-        label.TextColor3 = Color3.fromRGB(255, 255, 255)
-        label.TextSize = 12
-        label.TextXAlignment = Enum.TextXAlignment.Left
-
-        local sliderBg = Instance.new("Frame")
-        sliderBg.Parent = frame
-        sliderBg.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-        sliderBg.Size = UDim2.new(0.9, 0, 0.3, 0)
-        sliderBg.Position = UDim2.new(0.05, 0, 0.5, 0)
-
-        local sliderCorner = Instance.new("UICorner")
-        sliderCorner.CornerRadius = UDim.new(0, 5)
-        sliderCorner.Parent = sliderBg
-
-        local sliderFill = Instance.new("Frame")
-        sliderFill.Parent = sliderBg
-        sliderFill.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
-        sliderFill.Size = UDim2.new((settings[setting] - min) / (max - min), 0, 1, 0)
-
-        local fillCorner = Instance.new("UICorner")
-        fillCorner.CornerRadius = UDim.new(0, 5)
-        fillCorner.Parent = sliderFill
-
-        local valueLabel = Instance.new("TextLabel")
-        valueLabel.Parent = sliderBg
-        valueLabel.BackgroundTransparency = 1
-        valueLabel.Size = UDim2.new(1, 0, 1, 0)
-        valueLabel.Font = Enum.Font.Gotham
-        valueLabel.Text = settings[setting]
-        valueLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-        valueLabel.TextSize = 10
-
-        local dragging = false
-        sliderBg.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                dragging = true
-            end
-        end)
-
-        UserInputService.InputEnded:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                dragging = false
-            end
-        end)
-
-        game:GetService("RunService").RenderStepped:Connect(function()
-            if dragging then
-                local mousePos = UserInputService:GetMouseLocation()
-                local sliderPos = sliderBg.AbsolutePosition
-                local sliderSize = sliderBg.AbsoluteSize
-                local percent = math.clamp((mousePos.X - sliderPos.X) / sliderSize.X, 0, 1)
-                local value = math.floor(min + (max - min) * percent)
-                settings[setting] = value
-                sliderFill.Size = UDim2.new(percent, 0, 1, 0)
-                valueLabel.Text = value
-                label.Text = text .. ": " .. value
-            end
-        end)
-
-        parent.CanvasSize = UDim2.new(0, 0, 0, yOffset + 70)
-        return frame
-    end
-
+    
     -- ========== НАСТРОЙКИ ==========
     local settings = {
         AutoFarm = false,
         AutoFruit = false,
-        AutoQuest = false,
-        AutoBoss = false,
         ESP = false,
         SpeedHack = false,
         NoClip = false,
@@ -515,15 +410,107 @@ function createMainGUI()
         SpeedValue = 16,
         FarmRadius = 100
     }
-
-    -- ========== НАПОЛНЕНИЕ ТАБОВ ==========
+    
+    -- ========== ФУНКЦИИ СОЗДАНИЯ ЭЛЕМЕНТОВ ==========
+    function createToggle(parent, text, setting)
+        local yOffset = (#parent:GetChildren() * 45) + 10
+        local frame = Instance.new("Frame")
+        frame.Parent = parent
+        frame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+        frame.Size = UDim2.new(0.9, 0, 0, 35)
+        frame.Position = UDim2.new(0.05, 0, 0, yOffset)
+        
+        local frameCorner = Instance.new("UICorner")
+        frameCorner.CornerRadius = UDim.new(0, 8)
+        frameCorner.Parent = frame
+        
+        local label = Instance.new("TextLabel")
+        label.Parent = frame
+        label.BackgroundTransparency = 1
+        label.Size = UDim2.new(0.6, 0, 1, 0)
+        label.Position = UDim2.new(0, 10, 0, 0)
+        label.Font = Enum.Font.Gotham
+        label.Text = text
+        label.TextColor3 = Color3.fromRGB(220, 220, 220)
+        label.TextSize = 14
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        
+        local toggle = Instance.new("TextButton")
+        toggle.Parent = frame
+        toggle.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
+        toggle.Size = UDim2.new(0, 50, 0, 25)
+        toggle.Position = UDim2.new(1, -60, 0.5, -12.5)
+        toggle.Font = Enum.Font.GothamBold
+        toggle.Text = "OFF"
+        toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+        toggle.TextSize = 12
+        
+        local toggleCorner = Instance.new("UICorner")
+        toggleCorner.CornerRadius = UDim.new(0, 6)
+        toggleCorner.Parent = toggle
+        
+        toggle.MouseButton1Click:Connect(function()
+            settings[setting] = not settings[setting]
+            toggle.Text = settings[setting] and "ON" or "OFF"
+            toggle.BackgroundColor3 = settings[setting] and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(150, 0, 0)
+        end)
+        
+        parent.CanvasSize = UDim2.new(0, 0, 0, yOffset + 45)
+        return frame
+    end
+    
+    function createButton(parent, text, callback)
+        local yOffset = (#parent:GetChildren() * 45) + 10
+        local btn = Instance.new("TextButton")
+        btn.Parent = parent
+        btn.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+        btn.Size = UDim2.new(0.9, 0, 0, 35)
+        btn.Position = UDim2.new(0.05, 0, 0, yOffset)
+        btn.Font = Enum.Font.Gotham
+        btn.Text = text
+        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        btn.TextSize = 14
+        
+        local btnCorner = Instance.new("UICorner")
+        btnCorner.CornerRadius = UDim.new(0, 8)
+        btnCorner.Parent = btn
+        
+        btn.MouseButton1Click:Connect(callback)
+        
+        parent.CanvasSize = UDim2.new(0, 0, 0, yOffset + 45)
+        return btn
+    end
+    
+    function createSlider(parent, text, min, max, setting)
+        local yOffset = (#parent:GetChildren() * 55) + 10
+        local frame = Instance.new("Frame")
+        frame.Parent = parent
+        frame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+        frame.Size = UDim2.new(0.9, 0, 0, 45)
+        frame.Position = UDim2.new(0.05, 0, 0, yOffset)
+        
+        local frameCorner = Instance.new("UICorner")
+        frameCorner.CornerRadius = UDim.new(0, 8)
+        frameCorner.Parent = frame
+        
+        local label = Instance.new("TextLabel")
+        label.Parent = frame
+        label.BackgroundTransparency = 1
+        label.Size = UDim2.new(1, -20, 0.4, 0)
+        label.Position = UDim2.new(0, 10, 0, 5)
+        label.Font = Enum.Font.Gotham
+        label.Text = text .. ": " .. settings[setting]
+        label.TextColor3 = Color3.fromRGB(220, 220, 220)
+        label.TextSize = 12
+        
+        parent.CanvasSize = UDim2.new(0, 0, 0, yOffset + 55)
+        return frame
+    end     -- ========== НАПОЛНЕНИЕ ТАБОВ ==========
     local farmContent = tabContents[1]
-    createToggle(farmContent, "Автофарм мобов", "AutoFarm")
-    createToggle(farmContent, "Автосбор фруктов", "AutoFruit")
-    createToggle(farmContent, "Автоквесты", "AutoQuest")
-    createToggle(farmContent, "Фарм боссов", "AutoBoss")
-    createSlider(farmContent, "Радиус фарма", 50, 200, "FarmRadius")
-
+    createToggle(farmContent, "🤖 Автофарм мобов", "AutoFarm")
+    createToggle(farmContent, "🍎 Автосбор фруктов", "AutoFruit")
+    createToggle(farmContent, "👁️ ESP (видеть врагов)", "ESP")
+    
     local teleportContent = tabContents[2]
     createButton(teleportContent, "🏝️ Первое море", function()
         local char = player.Character
@@ -543,75 +530,37 @@ function createMainGUI()
             char.HumanoidRootPart.CFrame = CFrame.new(2000, 50, 2000)
         end
     end)
-    createButton(teleportContent, "🔄 На спавн", function()
-        local char = player.Character
-        if char and char:FindFirstChild("HumanoidRootPart") then
-            char.HumanoidRootPart.CFrame = CFrame.new(0, 50, 0)
-        end
-    end)
-
+    
     local miscContent = tabContents[3]
-    createToggle(miscContent, "ESP (видеть врагов)", "ESP")
     createToggle(miscContent, "⚡ Ускорение", "SpeedHack")
-    createSlider(miscContent, "Скорость", 16, 100, "SpeedValue")
     createToggle(miscContent, "🚪 No Clip", "NoClip")
     createToggle(miscContent, "🛡️ God Mode", "GodMode")
-
+    
     local settingsContent = tabContents[4]
     local infoFrame = Instance.new("Frame")
     infoFrame.Parent = settingsContent
-    infoFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
-    infoFrame.Size = UDim2.new(0.9, 0, 0, 120)
+    infoFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+    infoFrame.Size = UDim2.new(0.9, 0, 0, 100)
     infoFrame.Position = UDim2.new(0.05, 0, 0, 10)
-
+    
     local infoCorner = Instance.new("UICorner")
     infoCorner.CornerRadius = UDim.new(0, 15)
     infoCorner.Parent = infoFrame
-
+    
     local infoText = Instance.new("TextLabel")
     infoText.Parent = infoFrame
     infoText.BackgroundTransparency = 1
     infoText.Size = UDim2.new(1, -20, 1, -20)
     infoText.Position = UDim2.new(0, 10, 0, 10)
     infoText.Font = Enum.Font.Gotham
-    infoText.Text = "⚡ КОМАНДИР ХАБ ПРЕМИУМ\nВерсия 4.0 FINAL\n\n🔥 Нажми на иконку слева"
+    infoText.Text = "⚡ КОМАНДИР ХАБ XENO\nВерсия 6.0\n\n🔑 Ключ: 9866\n🎨 Иконка с пульсацией"
     infoText.TextColor3 = Color3.fromRGB(255, 255, 255)
     infoText.TextSize = 14
     infoText.TextWrapped = true
-
+    
     settingsContent.CanvasSize = UDim2.new(0, 0, 0, 150)
-
-    -- ========== АНИМАЦИЯ ИКОНКИ ==========
-    local isOpen = false
-
-    IconButton.MouseButton1Click:Connect(function()
-        isOpen = not isOpen
-        if isOpen then
-            MainFrame.Visible = true
-            TweenService:Create(MainFrame, tweenInfo, {
-                Size = UDim2.new(0, 600, 0, 500),
-                Position = UDim2.new(0.5, -300, 0.5, -250),
-                BackgroundTransparency = 0.1
-            }):Play()
-            TweenService:Create(IconButton, tweenInfo2, {
-                Size = UDim2.new(0, 70, 0, 70),
-                Rotation = 360
-            }):Play()
-        else
-            TweenService:Create(MainFrame, tweenInfo, {
-                Size = UDim2.new(0, 0, 0, 0),
-                Position = UDim2.new(0.5, 0, 0.5, 0),
-                BackgroundTransparency = 1
-            }):Play()
-            TweenService:Create(IconButton, tweenInfo2, {
-                Size = UDim2.new(0, 60, 0, 60),
-                Rotation = 0
-            }):Play()
-            wait(0.5)
-            MainFrame.Visible = false
-        end
-    end)
-
+    
+    -- ========== УПРАВЛЕНИЕ ОКНОМ ==========
     CloseBtn.MouseButton1Click:Connect(function()
         TweenService:Create(MainFrame, tweenInfo, {
             Size = UDim2.new(0, 0, 0, 0),
@@ -621,171 +570,10 @@ function createMainGUI()
         wait(0.5)
         GUI:Destroy()
     end)
-
+    
     MinimizeBtn.MouseButton1Click:Connect(function()
-        isOpen = false
-        TweenService:Create(MainFrame, tweenInfo, {
-            Size = UDim2.new(0, 0, 0, 0),
-            Position = UDim2.new(0.5, 0, 0.5, 0),
-            BackgroundTransparency = 1
-        }):Play()
-        wait(0.5)
         MainFrame.Visible = false
-    end)     -- ========== ФУНКЦИИ ДЛЯ РАБОТЫ ==========
-    function startAutoFarm()
-        spawn(function()
-            while settings.AutoFarm do
-                pcall(function()
-                    local char = player.Character
-                    if char and char:FindFirstChild("HumanoidRootPart") then
-                        local root = char.HumanoidRootPart
-                        for _, enemy in pairs(workspace:GetDescendants()) do
-                            if enemy:IsA("Model") and enemy:FindFirstChild("Humanoid") and enemy:FindFirstChild("HumanoidRootPart") then
-                                if enemy.Humanoid.Health > 0 and not game.Players:GetPlayerFromCharacter(enemy) then
-                                    local dist = (root.Position - enemy.HumanoidRootPart.Position).Magnitude
-                                    if dist < settings.FarmRadius then
-                                        root.CFrame = enemy.HumanoidRootPart.CFrame * CFrame.new(0, 0, 5)
-                                        wait(0.1)
-                                        local tool = char:FindFirstChildOfClass("Tool")
-                                        if tool then tool:Activate() end
-                                        break
-                                    end
-                                end
-                            end
-                        end
-                    end
-                end)
-                wait(0.5)
-            end
-        end)
-    end
-
-    function startAutoFruit()
-        spawn(function()
-            while settings.AutoFruit do
-                pcall(function()
-                    local char = player.Character
-                    if char and char:FindFirstChild("HumanoidRootPart") then
-                        local root = char.HumanoidRootPart
-                        for _, fruit in pairs(workspace:GetDescendants()) do
-                            if fruit.Name:lower():find("fruit") and fruit:IsA("Part") then
-                                root.CFrame = CFrame.new(fruit.Position)
-                                wait(0.2)
-                                firetouchinterest(root, fruit, 0)
-                                firetouchinterest(root, fruit, 1)
-                            end
-                        end
-                    end
-                end)
-                wait(1)
-            end
-        end)
-    end
-
-    local espObjects = {}
-    function startESP()
-        for _, enemy in pairs(workspace:GetDescendants()) do
-            if enemy:IsA("Model") and enemy:FindFirstChild("Humanoid") and not game.Players:GetPlayerFromCharacter(enemy) then
-                local bill = Instance.new("BillboardGui")
-                local lbl = Instance.new("TextLabel")
-                bill.Parent = enemy
-                bill.Size = UDim2.new(0, 100, 0, 50)
-                bill.Adornee = enemy.HumanoidRootPart
-                bill.AlwaysOnTop = true
-                lbl.Parent = bill                 lbl.Size = UDim2.new(1, 0, 1, 0)
-                lbl.BackgroundTransparency = 1
-                lbl.TextColor3 = Color3.new(1, 0, 0)
-                lbl.Text = "👾 ВРАГ"
-                lbl.TextStrokeTransparency = 0
-                lbl.TextSize = 14
-                
-                table.insert(espObjects, bill)
-            end
-        end
-    end
-
-    function stopESP()
-        for _, v in pairs(espObjects) do
-            v:Destroy()
-        end
-        espObjects = {}
-    end
-
-    function startSpeedHack()
-        spawn(function()
-            while settings.SpeedHack do
-                pcall(function()
-                    local char = player.Character
-                    if char and char:FindFirstChild("Humanoid") then
-                        char.Humanoid.WalkSpeed = settings.SpeedValue
-                    end
-                end)
-                wait(1)
-            end
-        end)
-    end
-
-    function startNoClip()
-        spawn(function()
-            while settings.NoClip do
-                pcall(function()
-                    local char = player.Character
-                    if char then
-                        for _, part in pairs(char:GetDescendants()) do
-                            if part:IsA("BasePart") then
-                                part.CanCollide = false
-                            end
-                        end
-                    end
-                end)
-                wait(0.1)
-            end
-        end)
-    end
-
-    function startGodMode()
-        spawn(function()
-            while settings.GodMode do
-                pcall(function()
-                    local char = player.Character
-                    if char and char:FindFirstChild("Humanoid") then
-                        char.Humanoid.MaxHealth = 9e9
-                        char.Humanoid.Health = 9e9
-                    end
-                end)
-                wait(1)
-            end
-        end)
-    end
+    end)
 end
 
-print("✅ ПРЕМИУМ ХАБ ЗАГРУЖЕН! Ключ: 9866")
-
--- ========== ПРОСТОЙ ФИКС ДЛЯ ИКОНКИ ==========
-spawn(function()
-    wait(1) -- Ждем появления иконки
-    
-    local icon = game:CoreGui:FindFirstChild("CommanderPremium") and 
-                 game:CoreGui.CommanderPremium:FindFirstChild("IconButton")
-    
-    if icon then
-        -- Очищаем все старые соединения
-        for _, connection in pairs(getconnections(icon.MouseButton1Click)) do
-            connection:Disable()
-        end
-        
-        -- Создаем новое простое соединение
-        icon.MouseButton1Click:Connect(function()
-            local mainFrame = game:CoreGui.CommanderPremium:FindFirstChild("MainFrame")
-            if mainFrame then
-                mainFrame.Visible = not mainFrame.Visible
-            end
-        end)
-        
-        print("✅ Иконка исправлена")
-    end
-end)
-            frame.Visible = not frame.Visible
-        end
-    end
-end)
+print("✅ XENO EDITION ЗАГРУЖЕН! Ключ: 9866")
