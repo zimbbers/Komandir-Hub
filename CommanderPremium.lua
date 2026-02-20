@@ -864,7 +864,6 @@ function createMainGUI()
 end
 
 print("✅ ПРЕМИУМ ХАБ ЗАГРУЖЕН! Ключ: 9866")
-
 -- ========== ДОПОЛНИТЕЛЬНЫЙ ФИКС ДЛЯ КЛИКА ==========
 local IconFix = game:CoreGui:FindFirstChild("CommanderPremium"):FindFirstChild("IconButton")
 if IconFix then
