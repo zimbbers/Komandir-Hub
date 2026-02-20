@@ -1,0 +1,463 @@
+--[[
+    ⚡ КОМАНДИР ХАБ - МОБИЛЬНАЯ ВЕРСИЯ ⚡
+    Для телефонов и планшетов
+    Версия: 2.0 MOBILE
+--]]
+
+repeat wait() until game:IsLoaded() and game.Players.LocalPlayer
+
+local player = game.Players.LocalPlayer
+local mouse = player:GetMouse()
+
+-- ========== ПРОСТОЕ МОБИЛЬНОЕ МЕНЮ ==========
+local MobileGUI = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local Title = Instance.new("TextLabel")
+local ToggleButton = Instance.new("TextButton")
+local TabButtons = {}
+local TabFrames = {}
+
+MobileGUI.Name = "CommanderMobile"
+MobileGUI.Parent = game.CoreGui
+MobileGUI.ResetOnSpawn = false
+MobileGUI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+-- Главное меню
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = MobileGUI
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+MainFrame.BorderSizePixel = 0
+MainFrame.Position = UDim2.new(0.05, 0, 0.1, 0)
+MainFrame.Size = UDim2.new(0.9, 0, 0.8, 0)
+MainFrame.Visible = true
+MainFrame.Active = true
+MainFrame.Draggable = true
+
+-- Заголовок
+Title.Name = "Title"
+Title.Parent = MainFrame
+Title.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+Title.BorderSizePixel = 0
+Title.Size = UDim2.new(1, 0, 0.08, 0)
+Title.Font = Enum.Font.GothamBold
+Title.Text = "⚡ КОМАНДИР МОБАЙЛ ⚡"
+Title.TextColor3 = Color3.fromRGB(255, 100, 0)
+Title.TextSize = 20
+
+-- Кнопка скрыть/показать
+ToggleButton.Name = "ToggleButton"
+ToggleButton.Parent = MobileGUI
+ToggleButton.BackgroundColor3 = Color3.fromRGB(255, 100, 0)
+ToggleButton.BorderSizePixel = 0
+ToggleButton.Position = UDim2.new(0.02, 0, 0.02, 0)
+ToggleButton.Size = UDim2.new(0.1, 0, 0.05, 0)
+ToggleButton.Font = Enum.Font.GothamBold
+ToggleButton.Text = "⚡"
+ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleButton.TextSize = 20
+ToggleButton.Draggable = true
+
+-- ========== ВКЛАДКИ ==========
+local tabs = {"💢 ФАРМ", "🌀 ТЕЛЕПОРТ", "⚙️ РАЗНОЕ", "🔧 НАСТРОЙКИ"}
+local tabPositions = {0, 0.25, 0.5, 0.75}
+
+for i, tabName in ipairs(tabs) do
+    -- Кнопки вкладок
+    local tabBtn = Instance.new("TextButton")
+    tabBtn.Name = "Tab" .. i
+    tabBtn.Parent = MainFrame
+    tabBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    tabBtn.BorderSizePixel = 0
+    tabBtn.Position = UDim2.new(tabPositions[i], 0, 0.08, 0)
+    tabBtn.Size = UDim2.new(0.25, 0, 0.06, 0)
+    tabBtn.Font = Enum.Font.Gotham
+    tabBtn.Text = tabName
+    tabBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+    tabBtn.TextSize = 14
+    tabBtn.ZIndex = 2
+    TabButtons[i] = tabBtn
+    
+    -- Фреймы вкладок (контент)
+    local tabFrame = Instance.new("ScrollingFrame")
+    tabFrame.Name = "Frame" .. i
+    tabFrame.Parent = MainFrame
+    tabFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    tabFrame.BorderSizePixel = 0
+    tabFrame.Position = UDim2.new(0, 0, 0.14, 0)
+    tabFrame.Size = UDim2.new(1, 0, 0.86, 0)
+    tabFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+    tabFrame.ScrollBarThickness = 8
+    tabFrame.Visible = (i == 1)
+    tabFrame.ZIndex = 3
+    TabFrames[i] = tabFrame
+    
+    -- Переключение вкладок
+    tabBtn.MouseButton1Click:Connect(function()
+        for j = 1, #TabFrames do
+            TabFrames[j].Visible = (j == i)
+            TabButtons[j].BackgroundColor3 = (j == i) and Color3.fromRGB(255, 100, 0) or Color3.fromRGB(30, 30, 30)
+            TabButtons[j].TextColor3 = (j == i) and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 200, 200)
+        end
+    end)
+end
+
+-- ========== ПЕРЕМЕННЫЕ ДЛЯ ФУНКЦИЙ ==========
+local settings = {
+    AutoFarm = false,
+    AutoFruit = false,
+    AutoQuest = false,
+    AutoBoss = false,
+    ESP = false,
+    SpeedHack = false,
+    NoClip = false,
+    GodMode = false,
+    SpeedValue = 16,
+    FarmRadius = 100
+}
+
+-- ========== ФУНКЦИЯ СОЗДАНИЯ КНОПОК ==========
+function createButton(parent, text, callback)
+    local yOffset = #parent:GetChildren() * 0.08
+    local btn = Instance.new("TextButton")
+    btn.Name = "Button" .. #parent:GetChildren()
+    btn.Parent = parent
+    btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    btn.BorderSizePixel = 0
+    btn.Position = UDim2.new(0.05, 0, yOffset, 0)
+    btn.Size = UDim2.new(0.9, 0, 0.07, 0)
+    btn.Font = Enum.Font.Gotham
+    btn.Text = text
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.TextSize = 16
+    btn.MouseButton1Click:Connect(callback)
+    return btn
+end
+
+function createToggle(parent, text, setting)
+    local yOffset = (#parent:GetChildren() + 1) * 0.08
+    local frame = Instance.new("Frame")
+    frame.Name = "Toggle" .. setting
+    frame.Parent = parent
+    frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    frame.BorderSizePixel = 0
+    frame.Position = UDim2.new(0.05, 0, yOffset, 0)
+    frame.Size = UDim2.new(0.9, 0, 0.07, 0)
+    
+    local label = Instance.new("TextLabel")
+    label.Parent = frame
+    label.BackgroundTransparency = 1
+    label.Size = UDim2.new(0.7, 0, 1, 0)
+    label.Font = Enum.Font.Gotham
+    label.Text = text
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.TextSize = 16
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    
+    local btn = Instance.new("TextButton")
+    btn.Parent = frame
+    btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    btn.BorderSizePixel = 0
+    btn.Position = UDim2.new(0.75, 0, 0.1, 0)
+    btn.Size = UDim2.new(0.2, 0, 0.8, 0)
+    btn.Font = Enum.Font.GothamBold
+    btn.Text = settings[setting] and "✅" or "❌"
+    btn.TextColor3 = settings[setting] and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+    btn.TextSize = 20
+    
+    btn.MouseButton1Click:Connect(function()
+        settings[setting] = not settings[setting]
+        btn.Text = settings[setting] and "✅" or "❌"
+        btn.TextColor3 = settings[setting] and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+        
+        if setting == "AutoFarm" and settings.AutoFarm then startAutoFarm() end
+        if setting == "AutoFruit" and settings.AutoFruit then startAutoFruit() end
+        if setting == "ESP" and settings.ESP then startESP() else stopESP() end
+        if setting == "SpeedHack" and settings.SpeedHack then startSpeedHack() end
+        if setting == "NoClip" and settings.NoClip then startNoClip() end
+        if setting == "GodMode" and settings.GodMode then startGodMode() end
+    end)
+    
+    return frame
+end
+
+function createSlider(parent, text, min, max, setting)
+    local yOffset = (#parent:GetChildren() + 1) * 0.08
+    local frame = Instance.new("Frame")
+    frame.Parent = parent
+    frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    frame.BorderSizePixel = 0
+    frame.Position = UDim2.new(0.05, 0, yOffset, 0)
+    frame.Size = UDim2.new(0.9, 0, 0.09, 0)
+    
+    local label = Instance.new("TextLabel")
+    label.Parent = frame
+    label.BackgroundTransparency = 1
+    label.Size = UDim2.new(1, 0, 0.4, 0)
+    label.Font = Enum.Font.Gotham
+    label.Text = text .. ": " .. settings[setting]
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.TextSize = 14
+    
+    local slider = Instance.new("TextButton")
+    slider.Parent = frame
+    slider.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    slider.BorderSizePixel = 0
+    slider.Position = UDim2.new(0.1, 0, 0.5, 0)
+    slider.Size = UDim2.new(0.8, 0, 0.4, 0)
+    slider.Text = ""
+    
+    local fill = Instance.new("Frame")
+    fill.Parent = slider
+    fill.BackgroundColor3 = Color3.fromRGB(255, 100, 0)
+    fill.BorderSizePixel = 0
+    fill.Size = UDim2.new((settings[setting] - min) / (max - min), 0, 1, 0)
+    
+    local valueLabel = Instance.new("TextLabel")
+    valueLabel.Parent = slider
+    valueLabel.BackgroundTransparency = 1
+    valueLabel.Size = UDim2.new(1, 0, 1, 0)
+    valueLabel.Font = Enum.Font.Gotham
+    valueLabel.Text = settings[setting]
+    valueLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    valueLabel.TextSize = 14
+    
+    local dragging = false
+    slider.MouseButton1Down:Connect(function()
+        dragging = true
+    end)
+    
+    game:GetService("UserInputService").InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+    
+    game:GetService("RunService").RenderStepped:Connect(function()
+        if dragging then
+            local mousePos = game:GetService("UserInputService"):GetMouseLocation()
+            local sliderPos = slider.AbsolutePosition
+            local sliderSize = slider.AbsoluteSize
+            local percent = math.clamp((mousePos.X - sliderPos.X) / sliderSize.X, 0, 1)
+            local value = math.floor(min + (max - min) * percent)
+            settings[setting] = value
+            fill.Size = UDim2.new(percent, 0, 1, 0)
+            valueLabel.Text = value
+            label.Text = text .. ": " .. value
+        end
+    end)
+end
+
+-- ========== НАПОЛНЕНИЕ ВКЛАДОК ==========
+
+-- Вкладка ФАРМ
+local farmFrame = TabFrames[1]
+createToggle(farmFrame, "🤖 Автофарм мобов", "AutoFarm")
+createToggle(farmFrame, "🍎 Автосбор фруктов", "AutoFruit")
+createToggle(farmFrame, "📋 Автоквесты", "AutoQuest")
+createToggle(farmFrame, "👾 Фарм боссов", "AutoBoss")
+createSlider(farmFrame, "Радиус фарма", 50, 200, "FarmRadius")
+
+-- Вкладка ТЕЛЕПОРТ
+local teleportFrame = TabFrames[2]
+createButton(teleportFrame, "🏝️ Первое море", function()
+    local char = player.Character
+    if char and char:FindFirstChild("HumanoidRootPart") then
+        char.HumanoidRootPart.CFrame = CFrame.new(100, 50, 100)
+    end
+end)
+
+createButton(teleportFrame, "🏝️ Второе море", function()
+    local char = player.Character
+    if char and char:FindFirstChild("HumanoidRootPart") then
+        char.HumanoidRootPart.CFrame = CFrame.new(1000, 50, 1000)
+    end
+end)
+
+createButton(teleportFrame, "🏝️ Третье море", function()
+    local char = player.Character
+    if char and char:FindFirstChild("HumanoidRootPart") then
+        char.HumanoidRootPart.CFrame = CFrame.new(2000, 50, 2000)
+    end
+end)
+
+createButton(teleportFrame, "🔄 На спавн", function()
+    local char = player.Character
+    if char and char:FindFirstChild("HumanoidRootPart") then
+        char.HumanoidRootPart.CFrame = CFrame.new(0, 50, 0)
+    end
+end)
+
+-- Вкладка РАЗНОЕ
+local miscFrame = TabFrames[3]
+createToggle(miscFrame, "👁️ ESP (видеть сквозь стены)", "ESP")
+createToggle(miscFrame, "⚡ Ускорение", "SpeedHack")
+createSlider(miscFrame, "Скорость", 16, 100, "SpeedValue")
+createToggle(miscFrame, "🚪 No Clip (сквозь стены)", "NoClip")
+createToggle(miscFrame, "🛡️ God Mode (бессмертие)", "GodMode")
+
+-- Вкладка НАСТРОЙКИ
+local settingsFrame = TabFrames[4]
+local infoLabel = Instance.new("TextLabel")
+infoLabel.Parent = settingsFrame
+infoLabel.BackgroundTransparency = 1
+infoLabel.Size = UDim2.new(1, 0, 0.1, 0)
+infoLabel.Font = Enum.Font.Gotham
+infoLabel.Text = "⚡ КОМАНДИР МОБАЙЛ\nВерсия 2.0"
+infoLabel.TextColor3 = Color3.fromRGB(255, 100, 0)
+infoLabel.TextSize = 18
+infoLabel.TextWrapped = true
+
+createButton(settingsFrame, "💾 Сохранить настройки", function()
+    print("✅ Настройки сохранены (в мобе это пока не работает)")
+end)
+
+createButton(settingsFrame, "📂 Загрузить настройки", function()
+    print("✅ Настройки загружены (в мобе это пока не работает)")
+end)
+
+-- Кнопка скрыть/показать меню
+ToggleButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = not MainFrame.Visible
+    ToggleButton.Text = MainFrame.Visible and "⚡" or "⚡"
+end)
+
+-- ========== ФУНКЦИИ ДЛЯ РАБОТЫ ==========
+
+-- Автофарм
+function startAutoFarm()
+    spawn(function()
+        while settings.AutoFarm do
+            pcall(function()
+                local char = player.Character
+                if char and char:FindFirstChild("HumanoidRootPart") then
+                    local root = char.HumanoidRootPart
+                    
+                    for _, enemy in pairs(workspace:GetDescendants()) do
+                        if enemy:IsA("Model") and enemy:FindFirstChild("Humanoid") and enemy:FindFirstChild("HumanoidRootPart") then
+                            if enemy.Humanoid.Health > 0 and not game.Players:GetPlayerFromCharacter(enemy) then
+                                local dist = (root.Position - enemy.HumanoidRootPart.Position).Magnitude
+                                if dist < settings.FarmRadius then
+                                    root.CFrame = enemy.HumanoidRootPart.CFrame * CFrame.new(0, 0, 5)
+                                    wait(0.1)
+                                    local tool = char:FindFirstChildOfClass("Tool")
+                                    if tool then tool:Activate() end
+                                    break
+                                end
+                            end
+                        end
+                    end
+                end
+            end)
+            wait(0.5)
+        end
+    end)
+end
+
+-- Автосбор фруктов
+function startAutoFruit()
+    spawn(function()
+        while settings.AutoFruit do
+            pcall(function()
+                local char = player.Character
+                if char and char:FindFirstChild("HumanoidRootPart") then
+                    local root = char.HumanoidRootPart
+                    
+                    for _, fruit in pairs(workspace:GetDescendants()) do
+                        if fruit.Name:lower():find("fruit") and fruit:IsA("Part") then
+                            root.CFrame = CFrame.new(fruit.Position)
+                            wait(0.2)
+                            firetouchinterest(root, fruit, 0)
+                            firetouchinterest(root, fruit, 1)
+                        end
+                    end
+                end
+            end)
+            wait(1)
+        end
+    end)
+end
+
+-- ESP
+local espObjects = {}
+function startESP()
+    for _, enemy in pairs(workspace:GetDescendants()) do
+        if enemy:IsA("Model") and enemy:FindFirstChild("Humanoid") and not game.Players:GetPlayerFromCharacter(enemy) then
+            local bill = Instance.new("BillboardGui")
+            local lbl = Instance.new("TextLabel")
+            
+            bill.Parent = enemy
+            bill.Size = UDim2.new(0, 100, 0, 50)
+            bill.Adornee = enemy.HumanoidRootPart
+            bill.AlwaysOnTop = true
+            
+            lbl.Parent = bill
+            lbl.Size = UDim2.new(1, 0, 1, 0)
+            lbl.BackgroundTransparency = 1
+            lbl.TextColor3 = Color3.new(1, 0, 0)
+            lbl.Text = "👾 ВРАГ"
+            lbl.TextStrokeTransparency = 0
+            lbl.TextSize = 14
+            
+            table.insert(espObjects, bill)
+        end
+    end
+end
+
+function stopESP()
+    for _, v in pairs(espObjects) do
+        v:Destroy()
+    end
+    espObjects = {}
+end
+
+-- Скорость
+function startSpeedHack()
+    spawn(function()
+        while settings.SpeedHack do
+            pcall(function()
+                local char = player.Character
+                if char and char:FindFirstChild("Humanoid") then
+                    char.Humanoid.WalkSpeed = settings.SpeedValue
+                end
+            end)
+            wait(1)
+        end
+    end)
+end
+
+-- No Clip
+function startNoClip()
+    spawn(function()
+        while settings.NoClip do
+            pcall(function()
+                local char = player.Character
+                if char then
+                    for _, part in pairs(char:GetDescendants()) do
+                        if part:IsA("BasePart") then
+                            part.CanCollide = false
+                        end
+                    end
+                end
+            end)
+            wait(0.1)
+        end
+    end)
+end
+
+-- God Mode
+function startGodMode()
+    spawn(function()
+        while settings.GodMode do
+            pcall(function()
+                local char = player.Character
+                if char and char:FindFirstChild("Humanoid") then
+                    char.Humanoid.MaxHealth = 9e9
+                    char.Humanoid.Health = 9e9
+                end
+            end)
+            wait(1)
+        end
+    end)
+end
+
+print("✅ Мобильная версия загружена! Кнопка ⚡ в левом верхнем углу")
