@@ -718,4 +718,149 @@ function createMainGUI()
         isOpen = false
         TweenService:Create(MainFrame, tweenInfo, {
             Size = UDim2.new(0, 0, 0, 0),
-            Position = U
+            Position = UDim2.new(0, 0, 0, 0),
+            Position = UDim2.new(0.5, 0, 0.5, 0),
+            BackgroundTransparency = 1
+        }):Play()
+        wait(0.5)
+        MainFrame.Visible = false
+    end)
+
+    -- ========== ФУНКЦИИ ДЛЯ РАБОТЫ ==========
+    function startAutoFarm()
+        spawn(function()
+            while settings.AutoFarm do
+                pcall(function()
+                    local char = player.Character
+                    if char and char:FindFirstChild("HumanoidRootPart") then
+                        local root = char.HumanoidRootPart
+                        
+                        for _, enemy in pairs(workspace:GetDescendants()) do
+                            if enemy:IsA("Model") and enemy:FindFirstChild("Humanoid") and enemy:FindFirstChild("HumanoidRootPart") then
+                                if enemy.Humanoid.Health > 0 and not game.Players:GetPlayerFromCharacter(enemy) then
+                                    local dist = (root.Position - enemy.HumanoidRootPart.Position).Magnitude
+                                    if dist < settings.FarmRadius then
+                                        root.CFrame = enemy.HumanoidRootPart.CFrame * CFrame.new(0, 0, 5)
+                                        wait(0.1)
+                                        local tool = char:FindFirstChildOfClass("Tool")
+                                        if tool then tool:Activate() end
+                                        break
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end)
+                wait(0.5)
+            end
+        end)
+    end
+
+    function startAutoFruit()
+        spawn(function()
+            while settings.AutoFruit do
+                pcall(function()
+                    local char = player.Character
+                    if char and char:FindFirstChild("HumanoidRootPart") then
+                        local root = char.HumanoidRootPart
+                        
+                        for _, fruit in pairs(workspace:GetDescendants()) do
+                            if fruit.Name:lower():find("fruit") and fruit:IsA("Part") then
+                                root.CFrame = CFrame.new(fruit.Position)
+                                wait(0.2)
+                                firetouchinterest(root, fruit, 0)
+                                firetouchinterest(root, fruit, 1)
+                            end
+                        end
+                    end
+                end)
+                wait(1)
+            end
+        end)
+    end
+
+    -- ESP
+    local espObjects = {}
+    function startESP()
+        for _, enemy in pairs(workspace:GetDescendants()) do
+            if enemy:IsA("Model") and enemy:FindFirstChild("Humanoid") and not game.Players:GetPlayerFromCharacter(enemy) then
+                local bill = Instance.new("BillboardGui")
+                local lbl = Instance.new("TextLabel")
+                
+                bill.Parent = enemy
+                bill.Size = UDim2.new(0, 100, 0, 50)
+                bill.Adornee = enemy.HumanoidRootPart
+                bill.AlwaysOnTop = true
+                
+                lbl.Parent = bill
+                lbl.Size = UDim2.new(1, 0, 1, 0)
+                lbl.BackgroundTransparency = 1
+                lbl.TextColor3 = Color3.new(1, 0, 0)
+                lbl.Text = "👾 ВРАГ"
+                lbl.TextStrokeTransparency = 0
+                lbl.TextSize = 14
+                
+                table.insert(espObjects, bill)
+            end
+        end
+    end
+
+    function stopESP()
+        for _, v in pairs(espObjects) do
+            v:Destroy()
+        end
+        espObjects = {}
+    end
+
+    -- Скорость
+    function startSpeedHack()
+        spawn(function()
+            while settings.SpeedHack do
+                pcall(function()
+                    local char = player.Character
+                    if char and char:FindFirstChild("Humanoid") then
+                        char.Humanoid.WalkSpeed = settings.SpeedValue
+                    end
+                end)
+                wait(1)
+            end
+        end)
+    end
+
+    -- No Clip
+    function startNoClip()
+        spawn(function()
+            while settings.NoClip do
+                pcall(function()
+                    local char = player.Character
+                    if char then
+                        for _, part in pairs(char:GetDescendants()) do
+                            if part:IsA("BasePart") then
+                                part.CanCollide = false
+                            end
+                        end
+                    end
+                end)
+                wait(0.1)
+            end
+        end)
+    end
+
+    -- God Mode
+    function startGodMode()
+        spawn(function()
+            while settings.GodMode do
+                pcall(function()
+                    local char = player.Character
+                    if char and char:FindFirstChild("Humanoid") then
+                        char.Humanoid.MaxHealth = 9e9
+                        char.Humanoid.Health = 9e9
+                    end
+                end)
+                wait(1)
+            end
+        end)
+    end
+end
+
+print("✅ ПРЕМИУМ ХАБ ЗАГРУЖЕН! Ключ: 9866")
