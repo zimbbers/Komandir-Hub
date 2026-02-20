@@ -759,15 +759,4 @@ function createMainGUI()
     end
 end
 
-print("✅ ПРЕМИУМ ХАБ ЗАГРУЖЕН! Ключ: 9866") -- ========== МИНИМАЛЬНЫЙ ФИКС ==========
-spawn(function()
-    wait(2) -- Ждем загрузки
-    local icon = game:CoreGui:FindFirstChild("CommanderPremium") and game:CoreGui.CommanderPremium:FindFirstChild("IconButton")
-    local frame = game:CoreGui:FindFirstChild("CommanderPremium") and game:CoreGui.CommanderPremium:FindFirstChild("MainFrame")
-    
-    if icon and frame then
-        icon.Activated = function()
-            frame.Visible = not frame.Visible
-        end
-    end
-end)
+print("✅ ПРЕМИУМ ХАБ ЗАГРУЖЕН! Ключ: 9866")
