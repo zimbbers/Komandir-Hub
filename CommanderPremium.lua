@@ -759,36 +759,15 @@ function createMainGUI()
     end
 end
 
-print("✅ ПРЕМИУМ ХАБ ЗАГРУЖЕН! Ключ: 9866")
-
--- ========== КАРДИНАЛЬНЫЙ ФИКС КЛИКА ==========
-pcall(function()
-    -- Ждем появления интерфейса
-    repeat wait() until game:CoreGui:FindFirstChild("CommanderPremium")
+print("✅ ПРЕМИУМ ХАБ ЗАГРУЖЕН! Ключ: 9866") -- ========== МИНИМАЛЬНЫЙ ФИКС ==========
+spawn(function()
+    wait(2) -- Ждем загрузки
+    local icon = game:CoreGui:FindFirstChild("CommanderPremium") and game:CoreGui.CommanderPremium:FindFirstChild("IconButton")
+    local frame = game:CoreGui:FindFirstChild("CommanderPremium") and game:CoreGui.CommanderPremium:FindFirstChild("MainFrame")
     
-    local icon = game:CoreGui.CommanderPremium:FindFirstChild("IconButton")
-    local mainFrame = game:CoreGui.CommanderPremium:FindFirstChild("MainFrame")
-    
-    if icon and mainFrame then
-        -- Удаляем все старые соединения
-        for _, event in pairs({icon:GetConnectedEvents()}) do
-            event:Disconnect()
+    if icon and frame then
+        icon.Activated = function()
+            frame.Visible = not frame.Visible
         end
-        
-        -- Способ 1: Через InputBegan (работает почти везде)
-        icon.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                mainFrame.Visible = not mainFrame.Visible
-            end
-        end)
-        
-        -- Способ 2: Через Activate (для совместимости)
-        icon.Activated:Connect(function()
-            mainFrame.Visible = not mainFrame.Visible
-        end)
-        
-        print("✅ ИКОНКА АКТИВИРОВАНА")
-    else
-        warn("Не найдена иконка или главное окно!")
     end
 end)
