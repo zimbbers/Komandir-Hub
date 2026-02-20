@@ -759,4 +759,40 @@ function createMainGUI()
     end
 end
 
-print("✅ ПРЕМИУМ ХАБ ЗАГРУЖЕН! Ключ: 9866")
+print("✅ ПРЕМИУМ ХАБ ЗАГРУЖЕН! Ключ: 9866") -- ========== ФИНАЛЬНЫЙ ФИКС ДЛЯ КЛИКА ==========
+pcall(function()
+    -- Ждем появления интерфейса
+    repeat wait() until game:CoreGui:FindFirstChild("CommanderPremium")
+    
+    local icon = game:CoreGui.CommanderPremium:FindFirstChild("IconButton")
+    if icon then
+        -- Удаляем старые соединения (если были)
+        icon.MouseButton1Click:Disconnect()
+        icon.MouseButton1Down:Disconnect()
+        icon.MouseButton1Up:Disconnect()
+        
+        -- Добавляем ВСЕ возможные события для надежности
+        icon.MouseButton1Click:Connect(function()
+            local mainFrame = game:CoreGui.CommanderPremium:FindFirstChild("MainFrame")
+            if mainFrame then
+                mainFrame.Visible = not mainFrame.Visible
+            end
+        end)
+        
+        icon.MouseButton1Down:Connect(function()
+            local mainFrame = game:CoreGui.CommanderPremium:FindFirstChild("MainFrame")
+            if mainFrame then
+                mainFrame.Visible = not mainFrame.Visible
+            end
+        end)
+        
+        icon.TouchTap:Connect(function()
+            local mainFrame = game:CoreGui.CommanderPremium:FindFirstChild("MainFrame")
+            if mainFrame then
+                mainFrame.Visible = not mainFrame.Visible
+            end
+        end)
+    end
+end)
+
+print("✅ ФИКС КЛИКА АКТИВИРОВАН")
