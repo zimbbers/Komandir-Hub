@@ -865,15 +865,17 @@ end
 
 print("✅ ПРЕМИУМ ХАБ ЗАГРУЖЕН! Ключ: 9866")
 
--- ========== ДОПОЛНИТЕЛЬНЫЙ ФИКС ДЛЯ КЛИКА ==========
-local IconFix = game:CoreGui:FindFirstChild("CommanderPremium"):FindFirstChild("IconButton")
-if IconFix then
-    IconFix.MouseButton1Click:Connect(function()
-        -- Принудительно вызываем ту же функцию, что и в основном коде
-        local mainFrame = game:CoreGui:FindFirstChild("CommanderPremium"):FindFirstChild("MainFrame")
-        if mainFrame then
-            mainFrame.Visible = not mainFrame.Visible
-        end
-    end)
-end
-print("✅ ФИКС КЛИКА АКТИВИРОВАН")
+-- ========== БЕЗОПАСНЫЙ ФИКС ДЛЯ КЛИКА ==========
+pcall(function()
+    repeat wait() until game:CoreGui:FindFirstChild("CommanderPremium")
+    
+    local icon = game:CoreGui.CommanderPremium:FindFirstChild("IconButton")
+    if icon then
+        icon.MouseButton1Click:Connect(function()
+            local mainFrame = game:CoreGui.CommanderPremium:FindFirstChild("MainFrame")
+            if mainFrame then
+                mainFrame.Visible = not mainFrame.Visible
+            end
+        end)
+    end
+end)
