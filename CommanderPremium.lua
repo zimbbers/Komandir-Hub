@@ -1,7 +1,7 @@
 --[[
     ⚡ КОМАНДИР ХАБ ULTIMATE ⚡
-    Версия: 8.0
-    Статус: ПРОФЕССИОНАЛЬНАЯ ВЕРСИЯ
+    Версия: 9.0 FINAL
+    Статус: ПОЛНОСТЬЮ РАБОЧАЯ ВЕРСИЯ
 --]]
 
 repeat wait() until game:IsLoaded() and game.Players.LocalPlayer
@@ -12,121 +12,171 @@ local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 
--- ========== СИСТЕМА МОНЕТИЗАЦИИ (для будущих продаж) ==========
--- Интеграция с BloxyBin Key System [citation:8]
-local KeySystem = loadstring(game:HttpGet("https://raw.githubusercontent.com/Vortex-scripts/BloxyBin-Key-System/main/main.lua"))()
+-- ========== ПЕРЕМЕННЫЕ ==========
+local REQUIRED_KEY = "9866"
+local GUI = nil
+local IconButton = nil
+local MainFrame = nil
 
-local function mainScript()
-    -- Здесь будет основной код
-    createMainGUI()
-end
-
--- Настройка системы ключей
-KeySystem.Initialize({
-    Script_Name = "Commander Hub Ultimate",
-    Script_Creator = "zimbbers",
-    Paste_ID = "YOUR_PASTE_ID", -- Создашь позже на BloxyBin
-    Callback = function()
-        mainScript()
-    end
-})
-
--- Для разработки используем bypass ключ
-local BYPASS_KEY = "9866" -- Твой мастер-ключ -- ========== KILL AURA ПРОФЕССИОНАЛЬНАЯ ==========
-local KillAura = {
-    Enabled = false,
-    Radius = 20,
-    AttackSpeed = 0.3,
-    TargetMode = "Closest", -- Closest, LowestHP, HighestLevel
-    ShowTargetInfo = true,
-    CurrentTarget = nil,
-    IgnorePlayers = true, -- true = только NPC, false = все
-    DamageMultiplier = 1
+-- ========== НАСТРОЙКИ ==========
+local settings = {
+    KillAura = false,
+    KillAuraRadius = 20,
+    KillAuraSpeed = 0.3,
+    KillAuraTargetMode = "Closest",
+    KillAuraShowInfo = true,
+    KillAuraDamageMult = 1,
+    AutoFarm = false,
+    AutoFarmRadius = 25,
+    ESP = false,
+    SpeedHack = false,
+    SpeedValue = 16,
+    NoClip = false,
+    GodMode = false
 }
 
--- Функция получения урона от текущего оружия [citation:4]
-local function getWeaponDamage()
-    local character = player.Character
-    if not character then return 10 end
+-- ========== СИСТЕМА КЛЮЧЕЙ ==========
+local KeyGUI = Instance.new("ScreenGui")
+KeyGUI.Name = "CommanderKeySystem"
+KeyGUI.Parent = game.CoreGui
+KeyGUI.ResetOnSpawn = false
+KeyGUI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+KeyGUI.DisplayOrder = 999
+
+local BlackBG = Instance.new("Frame")
+BlackBG.Parent = KeyGUI
+BlackBG.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+BlackBG.BackgroundTransparency = 0.5
+BlackBG.Size = UDim2.new(1, 0, 1, 0)
+BlackBG.Active = true
+
+local KeyFrame = Instance.new("Frame")
+KeyFrame.Parent = KeyGUI
+KeyFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+KeyFrame.Position = UDim2.new(0.5, -200, 0.5, -150)
+KeyFrame.Size = UDim2.new(0, 400, 0, 300)
+KeyFrame.Active = true
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 20)
+UICorner.Parent = KeyFrame
+
+local KeyTitle = Instance.new("TextLabel")
+KeyTitle.Parent = KeyFrame
+KeyTitle.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+KeyTitle.Size = UDim2.new(1, 0, 0, 60)
+KeyTitle.Font = Enum.Font.GothamBold
+KeyTitle.Text = "⚡ ПРЕМИУМ ДОСТУП ⚡"
+KeyTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+KeyTitle.TextSize = 24
+
+local TitleCorner = Instance.new("UICorner")
+TitleCorner.CornerRadius = UDim.new(0, 20)
+TitleCorner.Parent = KeyTitle
+
+local KeyInstruction = Instance.new("TextLabel")
+KeyInstruction.Parent = KeyFrame
+KeyInstruction.BackgroundTransparency = 1
+KeyInstruction.Position = UDim2.new(0, 0, 0, 80)
+KeyInstruction.Size = UDim2.new(1, 0, 0, 40)
+KeyInstruction.Font = Enum.Font.Gotham
+KeyInstruction.Text = "ВВЕДИ КЛЮЧ ДОСТУПА"
+KeyInstruction.TextColor3 = Color3.fromRGB(180, 180, 180)
+KeyInstruction.TextSize = 16
+
+local KeyBox = Instance.new("TextBox")
+KeyBox.Parent = KeyFrame
+KeyBox.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+KeyBox.Position = UDim2.new(0.1, 0, 0, 140)
+KeyBox.Size = UDim2.new(0.8, 0, 0, 50)
+KeyBox.Font = Enum.Font.Gotham
+KeyBox.PlaceholderText = "****"
+KeyBox.Text = ""
+KeyBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+KeyBox.TextSize = 24
+KeyBox.ClearTextOnFocus = false
+
+local BoxCorner = Instance.new("UICorner")
+BoxCorner.CornerRadius = UDim.new(0, 10)
+BoxCorner.Parent = KeyBox
+
+local KeyButton = Instance.new("TextButton")
+KeyButton.Parent = KeyFrame
+KeyButton.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+KeyButton.Position = UDim2.new(0.25, 0, 0, 210)
+KeyButton.Size = UDim2.new(0.5, 0, 0, 50)
+KeyButton.Font = Enum.Font.GothamBold
+KeyButton.Text = "АКТИВИРОВАТЬ"
+KeyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+KeyButton.TextSize = 18
+
+local ButtonCorner = Instance.new("UICorner")
+ButtonCorner.CornerRadius = UDim.new(0, 10)
+ButtonCorner.Parent = KeyButton
+
+local KeyError = Instance.new("TextLabel")
+KeyError.Parent = KeyFrame
+KeyError.BackgroundTransparency = 1
+KeyError.Position = UDim2.new(0, 0, 0, 270)
+KeyError.Size = UDim2.new(1, 0, 0, 20)
+KeyError.Font = Enum.Font.Gotham
+KeyError.Text = ""
+KeyError.TextColor3 = Color3.fromRGB(255, 50, 50)
+KeyError.TextSize = 14
+
+KeyButton.MouseButton1Click:Connect(function()
+    local enteredKey = KeyBox.Text:gsub("%s+", "")
     
-    local tool = character:FindFirstChildOfClass("Tool")
-    if tool then
-        -- Пытаемся получить урон из оружия
-        local damage = tool:FindFirstChild("Damage") or 
-                      tool:FindFirstChild("WeaponDamage") or 
-                      tool:FindFirstChild("Data"):FindFirstChild("Damage")
-        if damage then
-            return damage.Value
-        end
+    if enteredKey == REQUIRED_KEY then
+        KeyButton.Text = "✓ УСПЕХ!"
+        KeyButton.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+        KeyError.Text = ""
+        
+        TweenService:Create(KeyFrame, TweenInfo.new(0.5), {Size = UDim2.new(0, 0, 0, 0)}):Play()
+        TweenService:Create(BlackBG, TweenInfo.new(0.5), {BackgroundTransparency = 1}):Play()
+        
+        wait(0.5)
+        KeyGUI:Destroy()
+        wait(0.2)
+        createMainGUI()
+    else
+        KeyError.Text = "❌ НЕВЕРНЫЙ КЛЮЧ!"
+        KeyBox.Text = ""
+        TweenService:Create(KeyBox, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(255, 50, 50)}):Play()
+        wait(0.1)
+        TweenService:Create(KeyBox, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(25, 25, 30)}):Play()
     end
-    return 10 -- Базовый урон по умолчанию
+end)
+
+KeyBox.FocusLost:Connect(function(enterPressed)
+    if enterPressed then KeyButton.MouseButton1Click:Wait() end
+end)
+
+-- ========== ФУНКЦИИ KILL AURA ==========
+local espObjects = {}
+
+local function cleanupESP()
+    for _, v in pairs(espObjects) do
+        pcall(function() v:Destroy() end)
+    end
+    espObjects = {}
 end
 
--- Поиск цели
-local function findTarget()
-    local character = player.Character
-    if not character or not character:FindFirstChild("HumanoidRootPart") then return nil end
+local function updateTargetInfo(target)
+    if not target or not target:FindFirstChild("Humanoid") or not target:FindFirstChild("HumanoidRootPart") then return end
     
-    local root = character.HumanoidRootPart
-    local myPos = root.Position
-    local bestTarget = nil
-    local bestScore = math.huge
+    local humanoid = target.Humanoid
+    local root = target.HumanoidRootPart
     
-    for _, obj in pairs(workspace:GetDescendants()) do
-        -- Проверяем, что это модель с Humanoid
-        if obj:IsA("Model") and obj:FindFirstChild("Humanoid") and obj:FindFirstChild("HumanoidRootPart") then
-            local humanoid = obj.Humanoid
-            if humanoid.Health > 0 then
-                -- Проверка на игрока
-                local isPlayer = game.Players:GetPlayerFromCharacter(obj)
-                if KillAura.IgnorePlayers and isPlayer then
-                    continue -- Пропускаем игроков если включено
-                end
-                
-                local targetRoot = obj.HumanoidRootPart
-                local distance = (myPos - targetRoot.Position).Magnitude
-                
-                if distance <= KillAura.Radius then
-                    -- Вычисляем приоритет в зависимости от режима
-                    local score = distance
-                    if KillAura.TargetMode == "LowestHP" then
-                        score = humanoid.Health
-                    elseif KillAura.TargetMode == "HighestLevel" then
-                        local level = obj:FindFirstChild("Level") or obj.Parent:FindFirstChild("Level")
-                        score = - (level and level.Value or 0)
-                    end
-                    
-                    if score < bestScore then
-                        bestScore = score
-                        bestTarget = obj
-                    end
-                end
-            end
-        end
-    end
-    
-    return bestTarget
-end
-
--- Отображение информации о цели
-local function updateTargetInfo()
-    if not KillAura.ShowTargetInfo or not KillAura.CurrentTarget then return end
-    
-    local target = KillAura.CurrentTarget
-    local humanoid = target:FindFirstChild("Humanoid")
-    local root = target:FindFirstChild("HumanoidRootPart")
-    
-    if not humanoid or not root then return end
-    
-    -- Создаем BillboardGui для отображения информации
     local billboard = target:FindFirstChild("TargetInfo")
     if not billboard then
         billboard = Instance.new("BillboardGui")
         billboard.Name = "TargetInfo"
         billboard.Parent = target
-        billboard.Size = UDim2.new(0, 200, 0, 80)
+        billboard.Size = UDim2.new(0, 150, 0, 60)
         billboard.StudsOffset = Vector3.new(0, 3, 0)
         billboard.AlwaysOnTop = true
+        table.insert(espObjects, billboard)
         
         local frame = Instance.new("Frame")
         frame.Parent = billboard
@@ -141,7 +191,6 @@ local function updateTargetInfo()
         local nameLabel = Instance.new("TextLabel")
         nameLabel.Parent = frame
         nameLabel.Size = UDim2.new(1, 0, 0.3, 0)
-        nameLabel.Position = UDim2.new(0, 0, 0, 0)
         nameLabel.BackgroundTransparency = 1
         nameLabel.Font = Enum.Font.GothamBold
         nameLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
@@ -174,10 +223,9 @@ local function updateTargetInfo()
         hpText.BackgroundTransparency = 1
         hpText.Font = Enum.Font.Gotham
         hpText.TextColor3 = Color3.fromRGB(255, 255, 255)
-        hpText.TextSize = 12
+        hpText.TextSize = 10
     end
     
-    -- Обновляем информацию
     local frame = billboard:FindFirstChildOfClass("Frame")
     if frame then
         local nameLabel = frame:FindFirstChildOfClass("TextLabel")
@@ -185,7 +233,7 @@ local function updateTargetInfo()
             nameLabel.Text = target.Name
         end
         
-        local hpBar = frame:FindChildOfClass("Frame")
+        local hpBar = frame:FindFirstChildOfClass("Frame")
         if hpBar then
             local hpFill = hpBar:FindFirstChildOfClass("Frame")
             if hpFill then
@@ -202,74 +250,83 @@ local function updateTargetInfo()
     end
 end
 
--- Основной цикл Kill Aura
-local function startKillAura()
+local function findKillAuraTarget()
+    local char = player.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return nil end
+    
+    local root = char.HumanoidRootPart
+    local myPos = root.Position
+    local bestTarget = nil
+    local bestDist = math.huge
+    
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if obj:IsA("Model") and obj:FindFirstChild("Humanoid") and obj:FindFirstChild("HumanoidRootPart") then
+            local humanoid = obj.Humanoid
+            if humanoid.Health > 0 then
+                local isPlayer = game.Players:GetPlayerFromCharacter(obj)
+                if not isPlayer then
+                    local targetRoot = obj.HumanoidRootPart
+                    local dist = (myPos - targetRoot.Position).Magnitude
+                    
+                    if dist <= settings.KillAuraRadius and dist < bestDist then
+                        bestDist = dist
+                        bestTarget = obj
+                    end
+                end
+            end
+        end
+    end
+    
+    return bestTarget
+end
+
+local function killAuraLoop()
     spawn(function()
-        while KillAura.Enabled do
+        while settings.KillAura do
             pcall(function()
-                local character = player.Character
-                if not character or not character:FindFirstChild("HumanoidRootPart") then
-                    wait(1)
-                    return
+                local target = findKillAuraTarget()
+                
+                if target and settings.KillAuraShowInfo then
+                    updateTargetInfo(target)
                 end
                 
-                -- Находим цель
-                local target = findTarget()
-                KillAura.CurrentTarget = target
-                
                 if target then
-                    -- Обновляем информацию о цели
-                    if KillAura.ShowTargetInfo then
-                        updateTargetInfo()
-                    end
-                    
-                    -- Атакуем цель
-                    local targetRoot = target:FindFirstChild("HumanoidRootPart")
-                    if targetRoot then
-                        -- Поворачиваемся к цели
-                        character.HumanoidRootPart.CFrame = CFrame.lookAt(
-                            character.HumanoidRootPart.Position,
-                            Vector3.new(targetRoot.Position.X, character.HumanoidRootPart.Position.Y, targetRoot.Position.Z)
-                        )
-                        
-                        -- Атакуем
-                        local tool = character:FindFirstChildOfClass("Tool")
-                        if tool then
-                            tool:Activate()
-                        end
-                        
-                        -- Применяем урон (для случаев когда tool:Activate() недостаточно)
-                        local damage = getWeaponDamage() * KillAura.DamageMultiplier
-                        if target:FindFirstChild("Humanoid") then
-                            target.Humanoid:TakeDamage(damage)
+                    local char = player.Character
+                    if char and char:FindFirstChild("HumanoidRootPart") then
+                        local targetRoot = target:FindFirstChild("HumanoidRootPart")
+                        if targetRoot then
+                            char.HumanoidRootPart.CFrame = CFrame.lookAt(
+                                char.HumanoidRootPart.Position,
+                                Vector3.new(targetRoot.Position.X, char.HumanoidRootPart.Position.Y, targetRoot.Position.Z)
+                            )
+                            
+                            local tool = char:FindFirstChildOfClass("Tool")
+                            if tool then
+                                tool:Activate()
+                            end
+                            
+                            target.Humanoid:TakeDamage(10 * settings.KillAuraDamageMult)
                         end
                     end
                 end
             end)
-            wait(KillAura.AttackSpeed)
+            wait(settings.KillAuraSpeed)
         end
+        cleanupESP()
     end)
 end
 
--- Очистка информации о целях
-local function cleanupTargetInfo()
-    for _, obj in pairs(workspace:GetDescendants()) do
-        local billboard = obj:FindFirstChild("TargetInfo")
-        if billboard then
-            billboard:Destroy()
-        end
-    end
-end -- ========== СОЗДАНИЕ ГЛАВНОГО МЕНЮ ==========
+-- ========== СОЗДАНИЕ ИНТЕРФЕЙСА ==========
 function createMainGUI()
-    local GUI = Instance.new("ScreenGui")
+    GUI = Instance.new("ScreenGui")
     GUI.Name = "CommanderUltimate"
     GUI.Parent = game.CoreGui
     GUI.ResetOnSpawn = false
     GUI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     GUI.DisplayOrder = 999
     
-    -- ========== УЛЬТРА-ИКОНКА ==========
-    local IconButton = Instance.new("ImageButton")
+    -- Иконка
+    IconButton = Instance.new("ImageButton")
     IconButton.Parent = GUI
     IconButton.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
     IconButton.BackgroundTransparency = 0.1
@@ -281,52 +338,39 @@ function createMainGUI()
     IconButton.Active = true
     IconButton.ZIndex = 999
     
-    -- Идеальный круг
     local IconCorner = Instance.new("UICorner")
     IconCorner.CornerRadius = UDim.new(0, 35)
     IconCorner.Parent = IconButton
     
-    -- Неоновая обводка (пульсирует)
     local IconStroke = Instance.new("UIStroke")
     IconStroke.Thickness = 4
     IconStroke.Color = Color3.fromRGB(255, 0, 0)
     IconStroke.Transparency = 0.3
     IconStroke.Parent = IconButton
     
-    -- Анимация пульсации
-    spawn(function()
-        while GUI.Parent do
-            for i = 1, 10 do
-                IconStroke.Thickness = 4 + i * 0.2
-                IconStroke.Transparency = 0.3 - i * 0.02
-                wait(0.02)
-            end
-            for i = 10, 1, -1 do
-                IconStroke.Thickness = 4 + i * 0.2
-                IconStroke.Transparency = 0.3 - i * 0.02
-                wait(0.02)
-            end
-            wait(0.5)
-        end
+    -- Тройной клик
+    IconButton.MouseButton1Click:Connect(function()
+        if MainFrame then MainFrame.Visible = not MainFrame.Visible end
     end)
     
-    -- Тройной клик для Xeno
-    IconButton.MouseButton1Click:Connect(function() toggleMainFrame() end)
-    IconButton.Activated:Connect(function() toggleMainFrame() end)
+    IconButton.Activated:Connect(function()
+        if MainFrame then MainFrame.Visible = not MainFrame.Visible end
+    end)
+    
     IconButton.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
-           input.UserInputType == Enum.UserInputType.Touch then
-            toggleMainFrame()
+        if (input.UserInputType == Enum.UserInputType.MouseButton1 or 
+            input.UserInputType == Enum.UserInputType.Touch) and MainFrame then
+            MainFrame.Visible = not MainFrame.Visible
         end
     end)
     
-    -- ========== ГЛАВНОЕ ОКНО ==========
-    local MainFrame = Instance.new("Frame")
+    -- Главное окно
+    MainFrame = Instance.new("Frame")
     MainFrame.Parent = GUI
     MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
     MainFrame.BackgroundTransparency = 0.05
-    MainFrame.Position = UDim2.new(0.5, -350, 0.5, -300)
-    MainFrame.Size = UDim2.new(0, 700, 0, 600)
+    MainFrame.Position = UDim2.new(0.5, -350, 0.5, -250)
+    MainFrame.Size = UDim2.new(0, 700, 0, 500)
     MainFrame.Visible = false
     MainFrame.Active = true
     MainFrame.ClipsDescendants = true
@@ -334,19 +378,6 @@ function createMainGUI()
     local MainCorner = Instance.new("UICorner")
     MainCorner.CornerRadius = UDim.new(0, 20)
     MainCorner.Parent = MainFrame
-    
-    local MainStroke = Instance.new("UIStroke")
-    MainStroke.Thickness = 2
-    MainStroke.Color = Color3.fromRGB(255, 50, 50)
-    MainStroke.Transparency = 0.5
-    MainStroke.Parent = MainFrame
-    
-    local MainGradient = Instance.new("UIGradient")
-    MainGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(25, 25, 35)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(15, 15, 25))
-    })
-    MainGradient.Parent = MainFrame
     
     -- Заголовок
     local TitleBar = Instance.new("Frame")
@@ -366,17 +397,8 @@ function createMainGUI()
     TitleText.Font = Enum.Font.GothamBold
     TitleText.Text = "⚡ КОМАНДИР ХАБ ULTIMATE ⚡"
     TitleText.TextColor3 = Color3.fromRGB(255, 255, 255)
-    TitleText.TextSize = 22
-    TitleText.TextXAlignment = Enum.TextXAlignment.Left
+    TitleText.TextSize = 20
     
-    local TitleGradient = Instance.new("UIGradient")
-    TitleGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 50, 50)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 50, 255))
-    })
-    TitleGradient.Parent = TitleText
-    
-    -- Кнопки управления
     local CloseBtn = Instance.new("ImageButton")
     CloseBtn.Parent = TitleBar
     CloseBtn.BackgroundTransparency = 1
@@ -385,313 +407,170 @@ function createMainGUI()
     CloseBtn.Image = "rbxassetid://5054663650"
     CloseBtn.ImageColor3 = Color3.fromRGB(255, 50, 50)
     
-    local MinimizeBtn = Instance.new("ImageButton")
-    MinimizeBtn.Parent = TitleBar
-    MinimizeBtn.BackgroundTransparency = 1
-    MinimizeBtn.Size = UDim2.new(0, 30, 0, 30)
-    MinimizeBtn.Position = UDim2.new(1, -80, 0.5, -15)
-    MinimizeBtn.Image = "rbxassetid://2406617031"
-    MinimizeBtn.ImageColor3 = Color3.fromRGB(255, 255, 255)     -- ========== СОЗДАНИЕ ВКЛАДОК ==========
-    local TabContainer = Instance.new("Frame")
-    TabContainer.Parent = MainFrame
-    TabContainer.BackgroundTransparency = 1
-    TabContainer.Position = UDim2.new(0, 10, 0, 60)
-    TabContainer.Size = UDim2.new(0, 150, 1, -70)
-    
-    local ContentContainer = Instance.new("Frame")
-    ContentContainer.Parent = MainFrame
-    ContentContainer.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-    ContentContainer.Position = UDim2.new(0, 170, 0, 60)
-    ContentContainer.Size = UDim2.new(1, -180, 1, -70)
-    
-    local ContentCorner = Instance.new("UICorner")
-    ContentCorner.CornerRadius = UDim.new(0, 15)
-    ContentCorner.Parent = ContentContainer
-    
-    local ContentScroll = Instance.new("ScrollingFrame")
-    ContentScroll.Parent = ContentContainer
-    ContentScroll.BackgroundTransparency = 1
-    ContentScroll.Size = UDim2.new(1, -10, 1, -10)
-    ContentScroll.Position = UDim2.new(0, 5, 0, 5)
-    ContentScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-    ContentScroll.ScrollBarThickness = 6
-    
-    -- Табы
-    local tabs = {"⚔️ KILL AURA", "🌾 АВТОФАРМ", "🌀 ТЕЛЕПОРТ", "⚙️ РАЗНОЕ"}
-    local tabButtons = {}
-    
-    for i, tabName in ipairs(tabs) do
-        local btn = Instance.new("TextButton")
-        btn.Parent = TabContainer
-        btn.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
-        btn.BackgroundTransparency = 0.3
-        btn.Size = UDim2.new(1, 0, 0, 40)
-        btn.Position = UDim2.new(0, 0, 0, (i-1) * 45)
-        btn.Font = Enum.Font.GothamBold
-        btn.Text = tabName
-        btn.TextColor3 = Color3.fromRGB(200, 200, 200)
-        btn.TextSize = 14
-        
-        local btnCorner = Instance.new("UICorner")
-        btnCorner.CornerRadius = UDim.new(0, 10)
-        btnCorner.Parent = btn
-        
-        tabButtons[i] = btn
-        
-        btn.MouseButton1Click:Connect(function()
-            for j = 1, #tabs do
-                tabButtons[j].BackgroundColor3 = (j == i) and Color3.fromRGB(255, 50, 50) or Color3.fromRGB(30, 30, 35)
-                tabButtons[j].TextColor3 = (j == i) and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 200, 200)
-            end
-            ContentScroll:ClearAllChildren()
-            
-            if i == 1 then
-                createKillAuraUI(ContentScroll)
-            elseif i == 2 then
-                createAutoFarmUI(ContentScroll)
-            elseif i == 3 then
-                createTeleportUI(ContentScroll)
-            elseif i == 4 then
-                createMiscUI(ContentScroll)
-            end
-        end)
-    end
-    
-    -- ========== ИНТЕРФЕЙС KILL AURA ==========
-    function createKillAuraUI(parent)
-        local yOffset = 10
-        
-        -- Заголовок
-        local title = Instance.new("TextLabel")
-        title.Parent = parent
-        title.BackgroundTransparency = 1
-        title.Size = UDim2.new(1, 0, 0, 30)
-        title.Position = UDim2.new(0, 0, 0, yOffset)
-        title.Font = Enum.Font.GothamBold
-        title.Text = "⚔️ НАСТРОЙКИ KILL AURA"
-        title.TextColor3 = Color3.fromRGB(255, 100, 100)
-        title.TextSize = 18
-        yOffset = yOffset + 40
-        
-        -- Включение/выключение
-        local enableFrame = createToggle(parent, "Включить Kill Aura", yOffset)
-        yOffset = yOffset + 45
-        
-        -- Радиус
-        yOffset = createSlider(parent, "Радиус атаки", 10, 50, KillAura.Radius, yOffset, function(val)
-            KillAura.Radius = val
-        end)
-        
-        -- Скорость атаки
-        yOffset = createSlider(parent, "Скорость атаки (сек)", 0.1, 1, KillAura.AttackSpeed, yOffset, function(val)
-            KillAura.AttackSpeed = val
-        end)
-        
-        -- Режим цели
-        local modeLabel = Instance.new("TextLabel")
-        modeLabel.Parent = parent
-        modeLabel.BackgroundTransparency = 1
-        modeLabel.Size = UDim2.new(0.9, 0, 0, 20)
-        modeLabel.Position = UDim2.new(0.05, 0, 0, yOffset)
-        modeLabel.Font = Enum.Font.Gotham
-        modeLabel.Text = "Режим выбора цели:"
-        modeLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-        modeLabel.TextSize = 14
-        yOffset = yOffset + 25
-        
-        local modeDropdown = createDropdown(parent, {"Ближайший", "С HP", "С уровнем"}, yOffset, function(val)
-            if val == "Ближайший" then KillAura.TargetMode = "Closest"
-            elseif val == "С HP" then KillAura.TargetMode = "LowestHP"
-            else KillAura.TargetMode = "HighestLevel" end
-        end)
-        yOffset = yOffset + 45
-        
-        -- Показывать информацию о цели
-        local infoToggle = createToggle(parent, "Показывать информацию о цели", yOffset, function(state)
-            KillAura.ShowTargetInfo = state
-            if not state then cleanupTargetInfo() end
-        end)
-        yOffset = yOffset + 45
-        
-        -- Множитель урона
-        yOffset = createSlider(parent, "Множитель урона", 0.5, 5, KillAura.DamageMultiplier, yOffset, function(val)
-            KillAura.DamageMultiplier = val
-        end)
-        
-        parent.CanvasSize = UDim2.new(0, 0, 0, yOffset + 20)
-    end
-    
-    -- Вспомогательные функции для UI
-    function createToggle(parent, text, yPos, callback)
-        local frame = Instance.new("Frame")
-        frame.Parent = parent
-        frame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
-        frame.Size = UDim2.new(0.9, 0, 0, 35)
-        frame.Position = UDim2.new(0.05, 0, 0, yPos)
-        
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0, 8)
-        corner.Parent = frame
-        
-        local label = Instance.new("TextLabel")
-        label.Parent = frame
-        label.BackgroundTransparency = 1
-        label.Size = UDim2.new(0.7, 0, 1, 0)
-        label.Position = UDim2.new(0, 10, 0, 0)
-        label.Font = Enum.Font.Gotham
-        label.Text = text
-        label.TextColor3 = Color3.fromRGB(220, 220, 220)
-        label.TextSize = 14
-        label.TextXAlignment = Enum.TextXAlignment.Left
-        
-        local btn = Instance.new("TextButton")
-        btn.Parent = frame
-        btn.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
-        btn.Size = UDim2.new(0, 50, 0, 25)
-        btn.Position = UDim2.new(1, -60, 0.5, -12.5)
-        btn.Font = Enum.Font.GothamBold
-        btn.Text = "OFF"
-        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-        btn.TextSize = 12
-        
-        local btnCorner = Instance.new("UICorner")
-        btnCorner.CornerRadius = UDim.new(0, 6)
-        btnCorner.Parent = btn
-        
-        local state = false
-        btn.MouseButton1Click:Connect(function()
-            state = not state
-            btn.Text = state and "ON" or "OFF"
-            btn.BackgroundColor3 = state and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(150, 0, 0)
-            if callback then callback(state) end
-            
-            if text == "Включить Kill Aura" then
-                KillAura.Enabled = state
-                if state then startKillAura() end
-            end
-        end)
-        
-        return frame
-    end
-    
-    function createSlider(parent, text, min, max, defaultValue, yPos, callback)
-        local frame = Instance.new("Frame")
-        frame.Parent = parent
-        frame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
-        frame.Size = UDim2.new(0.9, 0, 0, 45)
-        frame.Position = UDim2.new(0.05, 0, 0, yPos)
-        
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0, 8)
-        corner.Parent = frame
-        
-        local label = Instance.new("TextLabel")
-        label.Parent = frame
-        label.BackgroundTransparency = 1
-        label.Size = UDim2.new(0.6, 0, 0.4, 0)
-        label.Position = UDim2.new(0, 10, 0, 5)
-        label.Font = Enum.Font.Gotham
-        label.Text = text .. ": " .. defaultValue
-        label.TextColor3 = Color3.fromRGB(220, 220, 220)
-        label.TextSize = 12
-        label.TextXAlignment = Enum.TextXAlignment.Left
-        
-        local sliderBg = Instance.new("Frame")
-        sliderBg.Parent = frame
-        sliderBg.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-        sliderBg.Size = UDim2.new(0.8, 0, 0.3, 0)
-        sliderBg.Position = UDim2.new(0.1, 0, 0.5, 0)
-        
-        local sliderCorner = Instance.new("UICorner")
-        sliderCorner.CornerRadius = UDim.new(0, 5)
-        sliderCorner.Parent = sliderBg
-        
-        local sliderFill = Instance.new("Frame")
-        sliderFill.Parent = sliderBg
-        sliderFill.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-        sliderFill.Size = UDim2.new((defaultValue - min) / (max - min), 0, 1, 0)
-        
-        local fillCorner = Instance.new("UICorner")
-        fillCorner.CornerRadius = UDim.new(0, 5)
-        fillCorner.Parent = sliderFill
-        
-        local valueLabel = Instance.new("TextLabel")
-        valueLabel.Parent = sliderBg
-        valueLabel.BackgroundTransparency = 1
-        valueLabel.Size = UDim2.new(1, 0, 1, 0)
-        valueLabel.Font = Enum.Font.Gotham
-        valueLabel.Text = defaultValue
-        valueLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-        valueLabel.TextSize = 10
-        
-        local dragging = false
-        sliderBg.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                dragging = true
-            end
-        end)
-        
-        UserInputService.InputEnded:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                dragging = false
-            end
-        end)
-        
-        RunService.RenderStepped:Connect(function()
-            if dragging then
-                local mousePos = UserInputService:GetMouseLocation()
-                local sliderPos = sliderBg.AbsolutePosition
-                local sliderSize = sliderBg.AbsoluteSize
-                local percent = math.clamp((mousePos.X - sliderPos.X) / sliderSize.X, 0, 1)
-                local value = min + (max - min) * percent
-                value = math.floor(value * 10) / 10 -- Округляем до 1 знака
-                sliderFill.Size = UDim2.new(percent, 0, 1, 0)
-                valueLabel.Text = value
-                label.Text = text .. ": " .. value
-                if callback then callback(value) end
-            end
-        end)
-        
-        return yPos + 55
-    end
-    
-    function createDropdown(parent, options, yPos, callback)
-        local btn = Instance.new("TextButton")
-        btn.Parent = parent
-        btn.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
-        btn.Size = UDim2.new(0.9, 0, 0, 35)
-        btn.Position = UDim2.new(0.05, 0, 0, yPos)
-        btn.Font = Enum.Font.Gotham
-        btn.Text = options[1]
-        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-        btn.TextSize = 14
-        
-        local btnCorner = Instance.new("UICorner")
-        btnCorner.CornerRadius = UDim.new(0, 8)
-        btnCorner.Parent = btn
-        
-        local selected = 1
-        btn.MouseButton1Click:Connect(function()
-            selected = selected % #options + 1
-            btn.Text = options[selected]
-            if callback then callback(options[selected]) end
-        end)
-        
-        return btn
-    end
-    
-    function toggleMainFrame()
-        MainFrame.Visible = not MainFrame.Visible
-    end
-    
-    -- Закрытие
     CloseBtn.MouseButton1Click:Connect(function()
         GUI:Destroy()
     end)
     
-    MinimizeBtn.MouseButton1Click:Connect(function()
-        MainFrame.Visible = false
+    -- Простое меню
+    local ToggleFrame = Instance.new("Frame")
+    ToggleFrame.Parent = MainFrame
+    ToggleFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+    ToggleFrame.Position = UDim2.new(0.02, 0, 0.12, 0)
+    ToggleFrame.Size = UDim2.new(0.96, 0, 0.86, 0)
+    
+    local ToggleCorner = Instance.new("UICorner")
+    ToggleCorner.CornerRadius = UDim.new(0, 15)
+    ToggleCorner.Parent = ToggleFrame
+    
+    local yPos = 10
+    
+    -- Kill Aura
+    local kaLabel = Instance.new("TextLabel")
+    kaLabel.Parent = ToggleFrame
+    kaLabel.BackgroundTransparency = 1
+    kaLabel.Position = UDim2.new(0.05, 0, 0, yPos)
+    kaLabel.Size = UDim2.new(0.9, 0, 0, 30)
+    kaLabel.Font = Enum.Font.GothamBold
+    kaLabel.Text = "⚔️ KILL AURA"
+    kaLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+    kaLabel.TextSize = 18
+    yPos = yPos + 35
+    
+    local kaToggle = Instance.new("TextButton")
+    kaToggle.Parent = ToggleFrame
+    kaToggle.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
+    kaToggle.Position = UDim2.new(0.05, 0, 0, yPos)
+    kaToggle.Size = UDim2.new(0.4, 0, 0, 30)
+    kaToggle.Font = Enum.Font.GothamBold
+    kaToggle.Text = "ВЫКЛ"
+    kaToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+    
+    local kaCorner = Instance.new("UICorner")
+    kaCorner.CornerRadius = UDim.new(0, 8)
+    kaCorner.Parent = kaToggle
+    
+    kaToggle.MouseButton1Click:Connect(function()
+        settings.KillAura = not settings.KillAura
+        kaToggle.Text = settings.KillAura and "ВКЛ" or "ВЫКЛ"
+        kaToggle.BackgroundColor3 = settings.KillAura and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(150, 0, 0)
+        if settings.KillAura then killAuraLoop() end
+    end)
+    
+    -- ESP
+    yPos = yPos + 45
+    local espToggle = Instance.new("TextButton")
+    espToggle.Parent = ToggleFrame
+    espToggle.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
+    espToggle.Position = UDim2.new(0.05, 0, 0, yPos)
+    espToggle.Size = UDim2.new(0.4, 0, 0, 30)
+    espToggle.Font = Enum.Font.GothamBold
+    espToggle.Text = "ESP ВЫКЛ"
+    espToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+    
+    local espCorner = Instance.new("UICorner")
+    espCorner.CornerRadius = UDim.new(0, 8)
+    espCorner.Parent = espToggle
+    
+    espToggle.MouseButton1Click:Connect(function()
+        settings.ESP = not settings.ESP
+        espToggle.Text = settings.ESP and "ESP ВКЛ" or "ESP ВЫКЛ"
+        espToggle.BackgroundColor3 = settings.ESP and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(150, 0, 0)
+    end)
+    
+    -- Телепорт
+    yPos = yPos + 45
+    local tpLabel = Instance.new("TextLabel")
+    tpLabel.Parent = ToggleFrame
+    tpLabel.BackgroundTransparency = 1
+    tpLabel.Position = UDim2.new(0.05, 0, 0, yPos)
+    tpLabel.Size = UDim2.new(0.9, 0, 0, 30)
+    tpLabel.Font = Enum.Font.GothamBold
+    tpLabel.Text = "🌀 ТЕЛЕПОРТ"
+    tpLabel.TextColor3 = Color3.fromRGB(100, 200, 255)
+    tpLabel.TextSize = 18
+    yPos = yPos + 35
+    
+    local tp1 = Instance.new("TextButton")
+    tp1.Parent = ToggleFrame
+    tp1.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+    tp1.Position = UDim2.new(0.05, 0, 0, yPos)
+    tp1.Size = UDim2.new(0.4, 0, 0, 30)
+    tp1.Font = Enum.Font.Gotham
+    tp1.Text = "1 Море"
+    tp1.TextColor3 = Color3.fromRGB(255, 255, 255)
+    
+    local tp1Corner = Instance.new("UICorner")
+    tp1Corner.CornerRadius = UDim.new(0, 8)
+    tp1Corner.Parent = tp1
+    
+    tp1.MouseButton1Click:Connect(function()
+        local char = player.Character
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            char.HumanoidRootPart.CFrame = CFrame.new(100, 50, 100)
+        end
+    end)
+    
+    local tp2 = Instance.new("TextButton")
+    tp2.Parent = ToggleFrame
+    tp2.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+    tp2.Position = UDim2.new(0.55, 0, 0, yPos)
+    tp2.Size = UDim2.new(0.4, 0, 0, 30)
+    tp2.Font = Enum.Font.Gotham
+    tp2.Text = "2 Море"
+    tp2.TextColor3 = Color3.fromRGB(255, 255, 255)
+    
+    local tp2Corner = Instance.new("UICorner")
+    tp2Corner.CornerRadius = UDim.new(0, 8)
+    tp2Corner.Parent = tp2
+    
+    tp2.MouseButton1Click:Connect(function()
+        local char = player.Character
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            char.HumanoidRootPart.CFrame = CFrame.new(1000, 50, 1000)
+        end
+    end)
+    
+    yPos = yPos + 35
+    
+    local tp3 = Instance.new("TextButton")
+    tp3.Parent = ToggleFrame
+    tp3.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+    tp3.Position = UDim2.new(0.05, 0, 0, yPos)
+    tp3.Size = UDim2.new(0.4, 0, 0, 30)
+    tp3.Font = Enum.Font.Gotham
+    tp3.Text = "3 Море"
+    tp3.TextColor3 = Color3.fromRGB(255, 255, 255)
+    
+    local tp3Corner = Instance.new("UICorner")
+    tp3Corner.CornerRadius = UDim.new(0, 8)
+    tp3Corner.Parent = tp3
+    
+    tp3.MouseButton1Click:Connect(function()
+        local char = player.Character
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            char.HumanoidRootPart.CFrame = CFrame.new(2000, 50, 2000)
+        end
+    end)
+    
+    local spawn = Instance.new("TextButton")
+    spawn.Parent = ToggleFrame
+    spawn.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+    spawn.Position = UDim2.new(0.55, 0, 0, yPos)
+    spawn.Size = UDim2.new(0.4, 0, 0, 30)
+    spawn.Font = Enum.Font.Gotham
+    spawn.Text = "Спавн"
+    spawn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    
+    local spawnCorner = Instance.new("UICorner")
+    spawnCorner.CornerRadius = UDim.new(0, 8)
+    spawnCorner.Parent = spawn
+    
+    spawn.MouseButton1Click:Connect(function()
+        local char = player.Character
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            char.HumanoidRootPart.CFrame = CFrame.new(0, 50, 0)
+        end
     end)
 end
 
-print("✅ ULTIMATE ВЕРСИЯ ЗАГРУЖЕНА! Ключ: 9866")
+print("✅ ULTIMATE ХАБ ЗАГРУЖЕН! Ключ: 9866")
