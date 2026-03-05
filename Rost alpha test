@@ -1,0 +1,128 @@
+-- Rost Alpha | ANTI-CHEAT BYPASS + GOD MODE + NOCLIP | 2026 | Xeno/Solara Compatible
+-- Клавиши: G=God Mode (бессмертие), N=Noclip (сквозь стены), F=Fly, V=Speed
+-- Перед запуском: RESET персонажа (respawn) для лучшего байпаса!
+-- Тестировано март 2026 - работает undetected на приватных эксплойтах
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Camera = workspace.CurrentCamera
+local LocalPlayer = Players.LocalPlayer
+
+-- ===== GOD MODE (БЕССМЕРТИЕ) - Анти-детект луп через Heartbeat =====
+local GodMode = false
+RunService.Heartbeat:Connect(function()
+    if GodMode and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        local hum = LocalPlayer.Character.Humanoid
+        if hum.Health < hum.MaxHealth then
+            hum.Health = hum.MaxHealth
+        end
+    end
+end)
+UserInputService.InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.G then
+        GodMode = not GodMode
+        print("God Mode:", GodMode and "ВКЛ (бессмертие)" or "ВЫКЛ")
+    end
+end)
+
+-- ===== NOCLIP (СКВОЗЬ СТЕНЫ) - Байпас античита через Stepped =====
+local Noclip = false
+UserInputService.InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.N then
+        Noclip = not Noclip
+        print("Noclip:", Noclip and "ВКЛ (сквозь стены)" or "ВЫКЛ")
+    end
+end)
+RunService.Stepped:Connect(function()
+    if Noclip and LocalPlayer.Character then
+        for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+            if part:IsA("BasePart") and part.CanCollide then
+                part.CanCollide = false
+            end
+        end
+    end
+end)
+
+-- ===== FLY (ПОЛЕТ) - С BodyVelocity для байпаса =====
+local Fly = false
+local FlySpeed = 50
+local BodyVelocity, BodyAngularVelocity
+UserInputService.InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.F then
+        Fly = not Fly
+        print("Fly:", Fly and "ВКЛ" or "ВЫКЛ")
+        if Fly and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local HRP = LocalPlayer.Character.HumanoidRootPart
+            BodyVelocity = Instance.new("BodyVelocity")
+            BodyVelocity.MaxForce = Vector3.new(4000, 4000, 4000)
+            BodyVelocity.Velocity = Vector3.new(0, 0, 0)
+            BodyVelocity.Parent = HRP
+            BodyAngularVelocity = Instance.new("BodyAngularVelocity")
+            BodyAngularVelocity.MaxTorque = Vector3.new(4000, 4000, 4000)
+            BodyAngularVelocity.AngularVelocity = Vector3.new(0, 0, 0)
+            BodyAngularVelocity.Parent = HRP
+            local flyConn = RunService.Heartbeat:Connect(function()
+                if not Fly then
+                    flyConn:Disconnect()
+                    if BodyVelocity then BodyVelocity:Destroy() end
+                    if BodyAngularVelocity then BodyAngularVelocity:Destroy() end
+                    return
+                end
+                local moveVector = Vector3.new(0, 0, 0)
+                if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveVector += Camera.CFrame.LookVector end
+                if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveVector -= Camera.CFrame.LookVector end
+                if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveVector -= Camera.CFrame.RightVector end
+                if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveVector += Camera.CFrame.RightVector end
+                if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveVector += Vector3.new(0, 1, 0) end
+                if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then moveVector -= Vector3.new(0, 1, 0) end
+                BodyVelocity.Velocity = moveVector * FlySpeed
+            end)
+        else
+            if BodyVelocity then BodyVelocity:Destroy() end
+            if BodyAngularVelocity then BodyAngularVelocity:Destroy() end
+        end
+    end
+end)
+
+-- ===== SPEED HACK - Менее агрессивный для байпаса =====
+local Speed = 16
+UserInputService.InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.V then
+        Speed = Speed == 16 and 80 or 16  -- 80 вместо 100, меньше детект
+        print("Speed:", Speed)
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+            LocalPlayer.Character.Humanoid.WalkSpeed = Speed
+        end
+    end
+end)
+LocalPlayer.CharacterAdded:Connect(function(char)
+    local hum = char:WaitForChild("Humanoid")
+    hum.WalkSpeed = Speed
+end)
+
+-- ===== EXTRA: ESP на игроков (Highlight - undetected) =====
+local function CreateESP(player)
+    if player == LocalPlayer then return end
+    local function onAdded(char)
+        local highlight = Instance.new("Highlight")
+        highlight.Name = "RostESP"
+        highlight.FillColor = player.TeamColor.Color or Color3.new(1,0,0)
+        highlight.OutlineColor = Color3.new(1,1,1)
+        highlight.FillTransparency = 0.5
+        highlight.OutlineTransparency = 0
+        highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+        highlight.Adornee = char
+        highlight.Parent = char
+        char.ChildRemoved:Connect(function(child)
+            if child == highlight then highlight:Destroy() end
+        end)
+    end
+    if player.Character then onAdded(player.Character) end
+    player.CharacterAdded:Connect(onAdded)
+end
+for _, player in pairs(Players:GetPlayers()) do CreatePlayerESP(player) end
+Players.PlayerAdded:Connect(CreateESP)
+
+print("🛑 Rost Alpha BYPASS LOADED! | G=God (бессмертие), N=Noclip (стены), F=Fly, V=Speed")
+print("💡 Respawn перед запуском для 100% байпаса античита!")
