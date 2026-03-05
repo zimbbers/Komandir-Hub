@@ -1,0 +1,158 @@
+-- Brookhaven RP Troll / Fun Script | 2026 | Fly + Noclip + Speed + ESP + Fling + Invisible
+-- Работает на большинстве executor'ов марта 2026
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+-- ===== FLY =====
+local flying = false
+local flySpeed = 60
+local bv, bav
+
+local function startFly()
+    if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
+    local hrp = LocalPlayer.Character.HumanoidRootPart
+    
+    bv = Instance.new("BodyVelocity", hrp)
+    bv.MaxForce = Vector3.new(1e9, 1e9, 1e9)
+    bv.Velocity = Vector3.new(0,0,0)
+    
+    bav = Instance.new("BodyAngularVelocity", hrp)
+    bav.MaxTorque = Vector3.new(1e9, 1e9, 1e9)
+    bav.AngularVelocity = Vector3.new(0,0,0)
+    
+    flying = true
+    
+    local conn
+    conn = RunService.Heartbeat:Connect(function()
+        if not flying then conn:Disconnect() bv:Destroy() bav:Destroy() return end
+        
+        local move = Vector3.new(0,0,0)
+        if UserInputService:IsKeyDown(Enum.KeyCode.W) then move += Camera.CFrame.LookVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.S) then move -= Camera.CFrame.LookVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.A) then move -= Camera.CFrame.RightVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.D) then move += Camera.CFrame.RightVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then move += Vector3.new(0,1,0) end
+        if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then move -= Vector3.new(0,1,0) end
+        
+        bv.Velocity = move.Unit * flySpeed * (UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) and 3 or 1)
+    end)
+end
+
+UserInputService.InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.F then
+        flying = not flying
+        print("Fly: " .. (flying and "ВКЛ" or "ВЫКЛ"))
+        if flying then startFly() else
+            if bv then bv:Destroy() end
+            if bav then bav:Destroy() end
+        end
+    end
+end)
+
+-- ===== NOCLIP =====
+local noclip = false
+UserInputService.InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.N then
+        noclip = not noclip
+        print("Noclip: " .. (noclip and "ВКЛ" or "ВЫКЛ"))
+    end
+end)
+
+RunService.Stepped:Connect(function()
+    if noclip and LocalPlayer.Character then
+        for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
+            if v:IsA("BasePart") then v.CanCollide = false end
+        end
+    end
+end)
+
+-- ===== SPEED + INFINITE JUMP =====
+local speed = 16
+local infJump = true
+
+UserInputService.InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.V then
+        speed = speed == 16 and 80 or (speed == 80 and 200 or 16)
+        print("Speed: " .. speed)
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+            LocalPlayer.Character.Humanoid.WalkSpeed = speed
+        end
+    end
+    
+    if infJump and input.KeyCode == Enum.KeyCode.Space then
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+            LocalPlayer.Character.Humanoid:ChangeState("Jumping")
+        end
+    end
+end)
+
+-- ===== ESP =====
+local function addESP(plr)
+    if plr == LocalPlayer then return end
+    local function onChar(char)
+        local hrp = char:WaitForChild("HumanoidRootPart")
+        local text = Drawing.new("Text")
+        text.Visible = false
+        text.Size = 14
+        text.Center = true
+        text.Outline = true
+        text.Color = Color3.fromRGB(255, 100, 100)
+        text.Font = Drawing.Fonts.Monospace
+        
+        local conn = RunService.RenderStepped:Connect(function()
+            if not char or not char.Parent then text:Remove() conn:Disconnect() return end
+            local pos, vis = Camera:WorldToViewportPoint(hrp.Position + Vector3.new(0, 3, 0))
+            text.Position = Vector2.new(pos.X, pos.Y)
+            text.Text = plr.Name .. " [" .. math.floor((LocalPlayer.Character.HumanoidRootPart.Position - hrp.Position).Magnitude) .. " studs]"
+            text.Visible = vis
+        end)
+    end
+    
+    if plr.Character then onChar(plr.Character) end
+    plr.CharacterAdded:Connect(onChar)
+end
+
+for _, plr in pairs(Players:GetPlayers()) do addESP(plr) end
+Players.PlayerAdded:Connect(addESP)
+
+-- ===== FLING NEAREST (TROLL) =====
+UserInputService.InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.B then
+        local closest, dist = nil, math.huge
+        if not LocalPlayer.Character then return end
+        local myPos = LocalPlayer.Character.HumanoidRootPart.Position
+        
+        for _, plr in pairs(Players:GetPlayers()) do
+            if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                local d = (plr.Character.HumanoidRootPart.Position - myPos).Magnitude
+                if d < dist and d < 30 then closest, dist = plr, d end
+            end
+        end
+        
+        if closest and closest.Character then
+            local hrp = closest.Character.HumanoidRootPart
+            hrp.Velocity = Vector3.new(0, 1000, 0) + (hrp.Position - myPos).Unit * 300
+            print("Fling: " .. closest.Name)
+        end
+    end
+end)
+
+-- ===== INVISIBLE =====
+UserInputService.InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.I then
+        if LocalPlayer.Character then
+            for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+                if part:IsA("BasePart") or part:IsA("MeshPart") then
+                    part.Transparency = part.Transparency == 0 and 1 or 0
+                end
+            end
+            print("Invisible toggled")
+        end
+    end
+end)
+
+print("Brookhaven Troll Script загружен! Клавиши: F=Fly, N=Noclip, V=Speed, B=Fling nearest, I=Invisible")
