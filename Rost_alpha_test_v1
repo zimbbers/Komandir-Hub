@@ -1,250 +1,165 @@
--- Rost Alpha PREMIUM BYPASS 2026 | Undetected God + Noclip + Silent Aim + ESP + Inventory Viewer + Fly/Speed
--- Respawn перед запуском! | GUI: Rayfield | Xeno/Solara/Wave
--- Фичи: Real God (multi-hook), Advanced Noclip, Smooth Fly, Speed, ESP (Highlight + Name/Dist), Tool ESP, Silent Aim base, Inventory Spy
+-- Rost Alpha FIX 2026 | Low-Detect God + Noclip + Fly + Speed (no kick) + ESP + Silent Aim base
+-- Respawn FIRST! | Xeno/Solara | Execute → Respawn → Test one by one
 
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
+local Camera = workspace.CurrentCamera
+local LP = Players.LocalPlayer
 
-local Window = Rayfield:CreateWindow({
-   Name = "Rost Alpha Premium Bypass 🔥 2026",
-   LoadingTitle = "Loading Premium Bypass...",
-   LoadingSubtitle = "Undetected | Respawn First",
-   ConfigurationSaving = { Enabled = true, FolderName = "RostPremium", FileName = "Config" },
-   KeySystem = false
-})
-
-local MainTab = Window:CreateTab("Main", 4483362458)
-local CombatTab = Window:CreateTab("Combat", 4483362458)
-local VisualsTab = Window:CreateTab("Visuals", 4483362458)
-local MovementTab = Window:CreateTab("Movement", 4483362458)
-
--- ===== STATES =====
 local God = false
 local Noclip = false
 local Fly = false
-local SpeedVal = 16
-local ESP = false
-local ToolESP = false
-local SilentAim = false
-local InventorySpy = false
+local Speed = 16  -- start low, max ~40-50 to avoid kick
+local ESPOn = false
 
-local Connections = {}
-local ESPObjects = {}
+local ESPTable = {}
 
-local LocalPlayer = game.Players.LocalPlayer
-local Camera = workspace.CurrentCamera
-
--- ===== GOD MODE - Multi-layer bypass (Health regen + MaxHealth hook) =====
-local function EnableGod()
-   God = true
-   Connections.GodHeartbeat = game:GetService("RunService").Heartbeat:Connect(function()
-      if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-         local hum = LocalPlayer.Character.Humanoid
-         hum.MaxHealth = math.huge
-         hum.Health = math.huge
-         hum.HealthChanged:Connect(function()
-            hum.Health = hum.MaxHealth
-         end)
-      end
-   end)
+-- ===== GOD MODE FIX (regen loop + hook health, no math.huge) =====
+local GodConn
+local function ToggleGod(val)
+    God = val
+    if God then
+        GodConn = RunService.Heartbeat:Connect(function()
+            if LP.Character and LP.Character:FindFirstChild("Humanoid") then
+                local h = LP.Character.Humanoid
+                if h.Health < h.MaxHealth then
+                    h.Health = h.MaxHealth  -- regen instead of huge
+                end
+                h.MaxHealth = 100  -- keep normal to avoid detect
+            end
+        end)
+    else
+        if GodConn then GodConn:Disconnect() end
+    end
 end
 
-local function DisableGod()
-   God = false
-   if Connections.GodHeartbeat then Connections.GodHeartbeat:Disconnect() end
+-- ===== NOCLIP FIX (Stepped + only on toggle, reset on disable) =====
+local NoclipConn
+local function ToggleNoclip(val)
+    Noclip = val
+    if Noclip then
+        NoclipConn = RunService.Stepped:Connect(function()
+            if LP.Character then
+                for _, p in pairs(LP.Character:GetDescendants()) do
+                    if p:IsA("BasePart") then
+                        p.CanCollide = false
+                    end
+                end
+            end
+        end)
+    else
+        if NoclipConn then NoclipConn:Disconnect() end
+        -- Reset collides to avoid visual bugs
+        if LP.Character then
+            for _, p in pairs(LP.Character:GetDescendants()) do
+                if p:IsA("BasePart") then
+                    p.CanCollide = true
+                end
+            end
+        end
+    end
 end
 
-MainTab:CreateToggle({
-   Name = "God Mode (Immortal)",
-   CurrentValue = false,
-   Flag = "GodToggle",
-   Callback = function(Value)
-      if Value then EnableGod() else DisableGod() end
-   end
-})
+-- ===== FLY FIX (CFrame based, low detect) =====
+local FlySpeed = 40  -- low to avoid kick
+local FlyConn
+local function ToggleFly(val)
+    Fly = val
+    if Fly then
+        FlyConn = RunService.RenderStepped:Connect(function()
+            if LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
+                local hrp = LP.Character.HumanoidRootPart
+                local move = Vector3.new(0,0,0)
+                if UIS:IsKeyDown(Enum.KeyCode.W) then move += Camera.CFrame.LookVector end
+                if UIS:IsKeyDown(Enum.KeyCode.S) then move -= Camera.CFrame.LookVector end
+                if UIS:IsKeyDown(Enum.KeyCode.A) then move -= Camera.CFrame.RightVector end
+                if UIS:IsKeyDown(Enum.KeyCode.D) then move += Camera.CFrame.RightVector end
+                if UIS:IsKeyDown(Enum.KeyCode.Space) then move += Vector3.new(0,1,0) end
+                if UIS:IsKeyDown(Enum.KeyCode.LeftShift) then move -= Vector3.new(0,1,0) end
+                hrp.CFrame = hrp.CFrame + (move * FlySpeed * 0.016)  -- delta time safe
+            end
+        end)
+    else
+        if FlyConn then FlyConn:Disconnect() end
+    end
+end
 
--- ===== NOCLIP - Advanced (all descendants + anti-collision check) =====
-Connections.Noclip = game:GetService("RunService").Stepped:Connect(function()
-   if Noclip and LocalPlayer.Character then
-      for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
-         if part:IsA("BasePart") or part:IsA("MeshPart") then
-            part.CanCollide = false
-         end
-      end
-   end
+-- ===== SPEED FIX (low value + no extreme) =====
+local function SetSpeed(val)
+    Speed = val
+    if LP.Character and LP.Character:FindFirstChild("Humanoid") then
+        LP.Character.Humanoid.WalkSpeed = val
+    end
+end
+
+-- ===== ESP (Highlight, low detect) =====
+local function AddESP(plr)
+    if plr == LP then return end
+    local conn = plr.CharacterAdded:Connect(function(char)
+        local hl = Instance.new("Highlight")
+        hl.FillColor = Color3.fromRGB(255,50,50)
+        hl.OutlineColor = Color3.new(1,1,1)
+        hl.FillTransparency = 0.6
+        hl.OutlineTransparency = 0
+        hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+        hl.Adornee = char
+        hl.Parent = char
+        table.insert(ESPTable, hl)
+    end)
+    if plr.Character then conn(plr.Character) end
+end
+
+local function ToggleESP(val)
+    ESPOn = val
+    if val then
+        for _, plr in pairs(Players:GetPlayers()) do AddESP(plr) end
+        Players.PlayerAdded:Connect(AddESP)
+    else
+        for _, hl in pairs(ESPTable) do hl:Destroy() end
+        ESPTable = {}
+    end
+end
+
+-- ===== SILENT AIM BASE (mouse target, very basic, low detect) =====
+local function SilentAim()
+    local mouse = LP:GetMouse()
+    local target = mouse.Target
+    if target and target.Parent and target.Parent:FindFirstChild("Humanoid") then
+        -- Здесь можно добавить fire server или raycast hook, но для теста просто print
+        print("Silent hit on: " .. target.Parent.Name)
+        -- Для реального: hook __namecall на remote events оружия
+    end
+end
+
+UIS.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        SilentAim()
+    end
 end)
 
-MovementTab:CreateToggle({
-   Name = "Noclip (Through Walls)",
-   CurrentValue = false,
-   Flag = "NoclipToggle",
-   Callback = function(Value)
-      Noclip = Value
-   end
-})
+-- ===== HOTKEYS =====
+UIS.InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.G then ToggleGod(not God) end
+    if input.KeyCode == Enum.KeyCode.N then ToggleNoclip(not Noclip) end
+    if input.KeyCode == Enum.KeyCode.F then ToggleFly(not Fly) end
+    if input.KeyCode == Enum.KeyCode.V then
+        local newSpeed = Speed == 16 and 40 or 16  -- safe values
+        SetSpeed(newSpeed)
+        print("Speed set to " .. newSpeed)
+    end
+    if input.KeyCode == Enum.KeyCode.E then ToggleESP(not ESPOn) end
+end)
 
--- ===== FLY - Smooth CFrame + BodyVelocity low-profile =====
-local FlyBV, FlyBG
-MovementTab:CreateToggle({
-   Name = "Fly (WASD + Space/Shift)",
-   CurrentValue = false,
-   Flag = "FlyToggle",
-   Callback = function(Value)
-      Fly = Value
-      if Fly and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-         local HRP = LocalPlayer.Character.HumanoidRootPart
-         FlyBV = Instance.new("BodyVelocity", HRP)
-         FlyBV.MaxForce = Vector3.new(1e5, 1e5, 1e5)
-         FlyBV.Velocity = Vector3.new()
-         FlyBG = Instance.new("BodyGyro", HRP)
-         FlyBG.MaxTorque = Vector3.new(1e5, 1e5, 1e5)
-         FlyBG.CFrame = HRP.CFrame
-         spawn(function()
-            while Fly do
-               local move = Vector3.new()
-               if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.W) then move += Camera.CFrame.LookVector end
-               if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.S) then move -= Camera.CFrame.LookVector end
-               if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.A) then move -= Camera.CFrame.RightVector end
-               if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.D) then move += Camera.CFrame.RightVector end
-               if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.Space) then move += Vector3.new(0,1,0) end
-               if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.LeftShift) then move -= Vector3.new(0,1,0) end
-               FlyBV.Velocity = move * 60
-               FlyBG.CFrame = Camera.CFrame
-               wait()
-            end
-            if FlyBV then FlyBV:Destroy() end
-            if FlyBG then FlyBG:Destroy() end
-         end)
-      end
-   end
-})
+-- ===== CHARACTER ADDED (reset on respawn) =====
+LP.CharacterAdded:Connect(function()
+    wait(1)  -- wait load
+    SetSpeed(Speed)
+    if God then ToggleGod(true) end
+    if Noclip then ToggleNoclip(true) end
+    if Fly then ToggleFly(true) end
+end)
 
--- ===== SPEED =====
-MovementTab:CreateSlider({
-   Name = "WalkSpeed",
-   Range = {16, 200},
-   Increment = 1,
-   Suffix = "Speed",
-   CurrentValue = 16,
-   Flag = "SpeedSlider",
-   Callback = function(Value)
-      SpeedVal = Value
-      if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-         LocalPlayer.Character.Humanoid.WalkSpeed = Value
-      end
-   end
-})
-
--- ===== ESP + Tool ESP =====
-local function AddESP(plr)
-   if plr == LocalPlayer then return end
-   local function OnChar(char)
-      local highlight = Instance.new("Highlight")
-      highlight.FillColor = Color3.fromRGB(255, 0, 0)
-      highlight.OutlineColor = Color3.new(1,1,1)
-      highlight.FillTransparency = 0.4
-      highlight.OutlineTransparency = 0
-      highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-      highlight.Adornee = char
-      highlight.Parent = char
-      table.insert(ESPObjects, highlight)
-      
-      -- Tool ESP Text
-      local toolText = Drawing.new("Text")
-      toolText.Visible = false
-      toolText.Size = 14
-      toolText.Center = true
-      toolText.Outline = true
-      toolText.Color = Color3.new(1,1,0)
-      Connections[char] = game:GetService("RunService").RenderStepped:Connect(function()
-         if not char or not char.Parent then toolText:Remove() return end
-         local hrp = char:FindFirstChild("HumanoidRootPart")
-         if hrp then
-            local pos, onScreen = Camera:WorldToViewportPoint(hrp.Position + Vector3.new(0,3,0))
-            toolText.Position = Vector2.new(pos.X, pos.Y)
-            local tool = ""
-            for _, obj in pairs(char:GetChildren()) do if obj:IsA("Tool") then tool = obj.Name break end end
-            toolText.Text = plr.Name .. " [" .. tool .. "]"
-            toolText.Visible = onScreen
-         end
-      end)
-   end
-   if plr.Character then OnChar(plr.Character) end
-   plr.CharacterAdded:Connect(OnChar)
-end
-
-VisualsTab:CreateToggle({
-   Name = "ESP + Tool ESP",
-   CurrentValue = false,
-   Flag = "ESPToggle",
-   Callback = function(Value)
-      ESP = Value
-      if Value then
-         for _, plr in pairs(game.Players:GetPlayers()) do AddESP(plr) end
-         game.Players.PlayerAdded:Connect(AddESP)
-      else
-         for _, obj in pairs(ESPObjects) do if obj then obj:Destroy() end end
-         ESPObjects = {}
-      end
-   end
-})
-
--- ===== SILENT AIM BASE (FOV + Mouse Hit) =====
-CombatTab:CreateToggle({
-   Name = "Silent Aim (Basic)",
-   CurrentValue = false,
-   Flag = "SilentAimToggle",
-   Callback = function(Value)
-      SilentAim = Value
-      if Value then
-         Connections.SilentAim = game:GetService("UserInputService").InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 and SilentAim then
-               local mouse = game.Players.LocalPlayer:GetMouse()
-               local target = mouse.Target
-               if target and target.Parent and target.Parent:FindFirstChild("Humanoid") then
-                  -- Simulate hit (hook raycast or fire server event - simplified)
-                  print("Silent Aim hit: " .. target.Parent.Name)
-               end
-            end
-         end)
-      else
-         if Connections.SilentAim then Connections.SilentAim:Disconnect() end
-      end
-   end
-})
-
--- ===== INVENTORY VIEWER (Basic Spy) =====
-PlayerTab:CreateToggle({
-   Name = "Inventory Viewer (Spy)",
-   CurrentValue = false,
-   Flag = "InvSpyToggle",
-   Callback = function(Value)
-      InventorySpy = Value
-      if Value then
-         -- Simple loop to print nearby players tools
-         spawn(function()
-            while InventorySpy do
-               for _, plr in pairs(game.Players:GetPlayers()) do
-                  if plr ~= LocalPlayer and (plr.Character and LocalPlayer.Character) then
-                     local dist = (plr.Character.HumanoidRootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
-                     if dist < 50 then
-                        local tools = {}
-                        for _, tool in pairs(plr.Character:GetChildren()) do if tool:IsA("Tool") then table.insert(tools, tool.Name) end end
-                        print(plr.Name .. " nearby inventory: " .. table.concat(tools, ", "))
-                     end
-                  end
-               end
-               wait(5)
-            end
-         end)
-      end
-   end
-})
-
-Rayfield:Notify({
-   Title = "Rost Alpha Premium Loaded",
-   Content = "Respawn first for best bypass! God/Noclip/Fly ready.",
-   Duration = 6.5,
-   Image = 4483362458
-})
-
-print("Premium Bypass Loaded - God, Noclip, Fly, ESP, Silent Aim, Inventory Spy")
+print("Rost Alpha FIX Loaded! Respawn NOW!")
+print("G=God, N=Noclip, F=Fly, V=Speed toggle, E=ESP")
+print("Speed max 40 to avoid kick! Test one feature at a time.")
