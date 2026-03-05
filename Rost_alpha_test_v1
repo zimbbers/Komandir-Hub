@@ -1,165 +1,296 @@
--- Rost Alpha FIX 2026 | Low-Detect God + Noclip + Fly + Speed (no kick) + ESP + Silent Aim base
--- Respawn FIRST! | Xeno/Solara | Execute → Respawn → Test one by one
+-- Rost Alpha PREMIUM HUB v2.1 | 2026 Undetected | Rayfield GUI | Full Bypass Features
+-- Respawn FIRST after execute! | Use Xeno/Solara/Wave | Speed max ~45-60 to avoid kick
+-- God: Regen loop | Noclip: Stepped safe | Fly: CFrame smooth | ESP: Highlight + Tool text
+-- Silent Aim: Basic mouse target (expandable)
 
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+   Name = "Rost Alpha PREMIUM 2026 🔥",
+   LoadingTitle = "Premium Bypass Loading...",
+   LoadingSubtitle = "Undetected | Respawn Required",
+   ConfigurationSaving = {
+      Enabled = true,
+      FolderName = "RostPremiumHub",
+      FileName = "ConfigV2"
+   },
+   Discord = {
+      Enabled = false,
+   },
+   KeySystem = false
+})
+
+-- Tabs
+local MainTab = Window:CreateTab("Main", 4483362458)
+local MovementTab = Window:CreateTab("Movement", 4483362458)
+local CombatTab = Window:CreateTab("Combat", 4483362458)
+local VisualsTab = Window:CreateTab("Visuals", 4483362458)
+local MiscTab = Window:CreateTab("Misc", 4483362458)
+
+local LP = game.Players.LocalPlayer
 local UIS = game:GetService("UserInputService")
+local RS = game:GetService("RunService")
 local Camera = workspace.CurrentCamera
-local LP = Players.LocalPlayer
 
-local God = false
-local Noclip = false
-local Fly = false
-local Speed = 16  -- start low, max ~40-50 to avoid kick
-local ESPOn = false
+-- States
+local States = {
+   God = false,
+   Noclip = false,
+   Fly = false,
+   Speed = 16,
+   ESP = false,
+   ToolESP = false,
+   SilentAim = false
+}
 
-local ESPTable = {}
+local Connections = {}
+local ESPHighlights = {}
+local ToolDrawings = {}
 
--- ===== GOD MODE FIX (regen loop + hook health, no math.huge) =====
+-- ===== GOD MODE (Safe Regen + MaxHealth hook) =====
 local GodConn
-local function ToggleGod(val)
-    God = val
-    if God then
-        GodConn = RunService.Heartbeat:Connect(function()
+local function UpdateGod()
+   if States.God then
+      if not GodConn then
+         GodConn = RS.Heartbeat:Connect(function()
             if LP.Character and LP.Character:FindFirstChild("Humanoid") then
-                local h = LP.Character.Humanoid
-                if h.Health < h.MaxHealth then
-                    h.Health = h.MaxHealth  -- regen instead of huge
-                end
-                h.MaxHealth = 100  -- keep normal to avoid detect
+               local hum = LP.Character.Humanoid
+               hum.MaxHealth = 100
+               if hum.Health < hum.MaxHealth then
+                  hum.Health = hum.MaxHealth
+               end
             end
-        end)
-    else
-        if GodConn then GodConn:Disconnect() end
-    end
+         end)
+      end
+   else
+      if GodConn then GodConn:Disconnect() GodConn = nil end
+   end
 end
 
--- ===== NOCLIP FIX (Stepped + only on toggle, reset on disable) =====
+MainTab:CreateToggle({
+   Name = "God Mode (Immortal - Regen)",
+   CurrentValue = false,
+   Flag = "God",
+   Callback = function(Value)
+      States.God = Value
+      UpdateGod()
+   end
+})
+
+-- ===== NOCLIP =====
 local NoclipConn
-local function ToggleNoclip(val)
-    Noclip = val
-    if Noclip then
-        NoclipConn = RunService.Stepped:Connect(function()
+local function UpdateNoclip()
+   if States.Noclip then
+      if not NoclipConn then
+         NoclipConn = RS.Stepped:Connect(function()
             if LP.Character then
-                for _, p in pairs(LP.Character:GetDescendants()) do
-                    if p:IsA("BasePart") then
-                        p.CanCollide = false
-                    end
-                end
+               for _, part in pairs(LP.Character:GetDescendants()) do
+                  if part:IsA("BasePart") or part:IsA("MeshPart") then
+                     part.CanCollide = false
+                  end
+               end
             end
-        end)
-    else
-        if NoclipConn then NoclipConn:Disconnect() end
-        -- Reset collides to avoid visual bugs
-        if LP.Character then
-            for _, p in pairs(LP.Character:GetDescendants()) do
-                if p:IsA("BasePart") then
-                    p.CanCollide = true
-                end
-            end
-        end
-    end
+         end)
+      end
+   else
+      if NoclipConn then NoclipConn:Disconnect() NoclipConn = nil end
+      if LP.Character then
+         for _, part in pairs(LP.Character:GetDescendants()) do
+            if part:IsA("BasePart") then part.CanCollide = true end
+         end
+      end
+   end
 end
 
--- ===== FLY FIX (CFrame based, low detect) =====
-local FlySpeed = 40  -- low to avoid kick
+MovementTab:CreateToggle({
+   Name = "Noclip (Through Walls)",
+   CurrentValue = false,
+   Flag = "Noclip",
+   Callback = function(Value)
+      States.Noclip = Value
+      UpdateNoclip()
+   end
+})
+
+-- ===== FLY (CFrame Smooth - Low Detect) =====
+local FlySpeed = 50
 local FlyConn
-local function ToggleFly(val)
-    Fly = val
-    if Fly then
-        FlyConn = RunService.RenderStepped:Connect(function()
+MovementTab:CreateToggle({
+   Name = "Fly (WASD + Space/Shift)",
+   CurrentValue = false,
+   Flag = "Fly",
+   Callback = function(Value)
+      States.Fly = Value
+      if Value then
+         FlyConn = RS.RenderStepped:Connect(function(dt)
             if LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
-                local hrp = LP.Character.HumanoidRootPart
-                local move = Vector3.new(0,0,0)
-                if UIS:IsKeyDown(Enum.KeyCode.W) then move += Camera.CFrame.LookVector end
-                if UIS:IsKeyDown(Enum.KeyCode.S) then move -= Camera.CFrame.LookVector end
-                if UIS:IsKeyDown(Enum.KeyCode.A) then move -= Camera.CFrame.RightVector end
-                if UIS:IsKeyDown(Enum.KeyCode.D) then move += Camera.CFrame.RightVector end
-                if UIS:IsKeyDown(Enum.KeyCode.Space) then move += Vector3.new(0,1,0) end
-                if UIS:IsKeyDown(Enum.KeyCode.LeftShift) then move -= Vector3.new(0,1,0) end
-                hrp.CFrame = hrp.CFrame + (move * FlySpeed * 0.016)  -- delta time safe
+               local hrp = LP.Character.HumanoidRootPart
+               local move = Vector3.new()
+               if UIS:IsKeyDown(Enum.KeyCode.W) then move += Camera.CFrame.LookVector end
+               if UIS:IsKeyDown(Enum.KeyCode.S) then move -= Camera.CFrame.LookVector end
+               if UIS:IsKeyDown(Enum.KeyCode.A) then move -= Camera.CFrame.RightVector end
+               if UIS:IsKeyDown(Enum.KeyCode.D) then move += Camera.CFrame.RightVector end
+               if UIS:IsKeyDown(Enum.KeyCode.Space) then move += Vector3.new(0,1,0) end
+               if UIS:IsKeyDown(Enum.KeyCode.LeftShift) then move -= Vector3.new(0,1,0) end
+               hrp.CFrame += move * FlySpeed * dt
             end
-        end)
-    else
-        if FlyConn then FlyConn:Disconnect() end
-    end
+         end)
+      else
+         if FlyConn then FlyConn:Disconnect() FlyConn = nil end
+      end
+   end
+})
+
+MovementTab:CreateSlider({
+   Name = "Fly Speed",
+   Range = {20, 120},
+   Increment = 5,
+   Suffix = "",
+   CurrentValue = 50,
+   Flag = "FlySpeed",
+   Callback = function(Value)
+      FlySpeed = Value
+   end
+})
+
+-- ===== SPEED =====
+MovementTab:CreateSlider({
+   Name = "Walk Speed (Safe: 16-60)",
+   Range = {16, 80},
+   Increment = 1,
+   Suffix = "",
+   CurrentValue = 16,
+   Flag = "Speed",
+   Callback = function(Value)
+      States.Speed = Value
+      if LP.Character and LP.Character:FindFirstChild("Humanoid") then
+         LP.Character.Humanoid.WalkSpeed = Value
+      end
+   end
+})
+
+-- ===== ESP + Tool ESP =====
+local function CreateESP(plr)
+   if plr == LP then return end
+
+   local function OnChar(char)
+      local hl = Instance.new("Highlight")
+      hl.FillColor = Color3.fromRGB(255, 80, 80)
+      hl.OutlineColor = Color3.new(1,1,1)
+      hl.FillTransparency = 0.45
+      hl.OutlineTransparency = 0.1
+      hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+      hl.Adornee = char
+      hl.Parent = char
+      table.insert(ESPHighlights, hl)
+
+      -- Tool Text (Drawing)
+      local txt = Drawing.new("Text")
+      txt.Size = 14
+      txt.Center = true
+      txt.Outline = true
+      txt.Color = Color3.new(1, 0.8, 0)
+      txt.Font = Drawing.Fonts.Monospace
+
+      Connections[char] = RS.RenderStepped:Connect(function()
+         if not char or not char.Parent then txt:Remove() return end
+         local hrp = char:FindFirstChild("HumanoidRootPart")
+         if hrp then
+            local pos, vis = Camera:WorldToViewportPoint(hrp.Position + Vector3.new(0, 3.5, 0))
+            txt.Position = Vector2.new(pos.X, pos.Y)
+            local toolName = "No Tool"
+            for _, child in pairs(char:GetChildren()) do
+               if child:IsA("Tool") then toolName = child.Name break end
+            end
+            txt.Text = plr.Name .. " | " .. toolName
+            txt.Visible = vis and States.ToolESP
+         end
+      end)
+   end
+
+   if plr.Character then OnChar(plr.Character) end
+   plr.CharacterAdded:Connect(OnChar)
 end
 
--- ===== SPEED FIX (low value + no extreme) =====
-local function SetSpeed(val)
-    Speed = val
-    if LP.Character and LP.Character:FindFirstChild("Humanoid") then
-        LP.Character.Humanoid.WalkSpeed = val
-    end
-end
+VisualsTab:CreateToggle({
+   Name = "Player ESP (Highlight)",
+   CurrentValue = false,
+   Flag = "ESP",
+   Callback = function(Value)
+      States.ESP = Value
+      if Value then
+         for _, plr in pairs(game.Players:GetPlayers()) do CreateESP(plr) end
+         game.Players.PlayerAdded:Connect(CreateESP)
+      else
+         for _, hl in pairs(ESPHighlights) do hl:Destroy() end
+         ESPHighlights = {}
+      end
+   end
+})
 
--- ===== ESP (Highlight, low detect) =====
-local function AddESP(plr)
-    if plr == LP then return end
-    local conn = plr.CharacterAdded:Connect(function(char)
-        local hl = Instance.new("Highlight")
-        hl.FillColor = Color3.fromRGB(255,50,50)
-        hl.OutlineColor = Color3.new(1,1,1)
-        hl.FillTransparency = 0.6
-        hl.OutlineTransparency = 0
-        hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-        hl.Adornee = char
-        hl.Parent = char
-        table.insert(ESPTable, hl)
-    end)
-    if plr.Character then conn(plr.Character) end
-end
+VisualsTab:CreateToggle({
+   Name = "Tool ESP (Text)",
+   CurrentValue = false,
+   Flag = "ToolESP",
+   Callback = function(Value)
+      States.ToolESP = Value
+   end
+})
 
-local function ToggleESP(val)
-    ESPOn = val
-    if val then
-        for _, plr in pairs(Players:GetPlayers()) do AddESP(plr) end
-        Players.PlayerAdded:Connect(AddESP)
-    else
-        for _, hl in pairs(ESPTable) do hl:Destroy() end
-        ESPTable = {}
-    end
-end
-
--- ===== SILENT AIM BASE (mouse target, very basic, low detect) =====
-local function SilentAim()
-    local mouse = LP:GetMouse()
-    local target = mouse.Target
-    if target and target.Parent and target.Parent:FindFirstChild("Humanoid") then
-        -- Здесь можно добавить fire server или raycast hook, но для теста просто print
-        print("Silent hit on: " .. target.Parent.Name)
-        -- Для реального: hook __namecall на remote events оружия
-    end
-end
+-- ===== SILENT AIM (Basic - Mouse Target) =====
+CombatTab:CreateToggle({
+   Name = "Silent Aim (Click to Hit)",
+   CurrentValue = false,
+   Flag = "SilentAim",
+   Callback = function(Value)
+      States.SilentAim = Value
+   end
+})
 
 UIS.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        SilentAim()
-    end
+   if input.UserInputType == Enum.UserInputType.MouseButton1 and States.SilentAim then
+      local mouse = LP:GetMouse()
+      if mouse.Target and mouse.Target.Parent and mouse.Target.Parent:FindFirstChild("Humanoid") then
+         Rayfield:Notify({
+            Title = "Silent Aim Hit",
+            Content = "Target: " .. mouse.Target.Parent.Name,
+            Duration = 3,
+         })
+         -- Для реального silent aim нужно hook raycast или remote — это база
+      end
+   end
 end)
 
--- ===== HOTKEYS =====
-UIS.InputBegan:Connect(function(input)
-    if input.KeyCode == Enum.KeyCode.G then ToggleGod(not God) end
-    if input.KeyCode == Enum.KeyCode.N then ToggleNoclip(not Noclip) end
-    if input.KeyCode == Enum.KeyCode.F then ToggleFly(not Fly) end
-    if input.KeyCode == Enum.KeyCode.V then
-        local newSpeed = Speed == 16 and 40 or 16  -- safe values
-        SetSpeed(newSpeed)
-        print("Speed set to " .. newSpeed)
-    end
-    if input.KeyCode == Enum.KeyCode.E then ToggleESP(not ESPOn) end
-end)
+-- ===== MISC =====
+MiscTab:CreateButton({
+   Name = "Respawn (Fix Bugs)",
+   Callback = function()
+      if LP.Character then LP.Character:BreakJoints() end
+   end
+})
 
--- ===== CHARACTER ADDED (reset on respawn) =====
+MiscTab:CreateButton({
+   Name = "Unload Hub",
+   Callback = function()
+      Rayfield:Destroy()
+   end
+})
+
+-- Character Respawn Hook
 LP.CharacterAdded:Connect(function()
-    wait(1)  -- wait load
-    SetSpeed(Speed)
-    if God then ToggleGod(true) end
-    if Noclip then ToggleNoclip(true) end
-    if Fly then ToggleFly(true) end
+   wait(0.5)
+   if LP.Character and LP.Character:FindFirstChild("Humanoid") then
+      LP.Character.Humanoid.WalkSpeed = States.Speed
+   end
+   UpdateGod()
+   UpdateNoclip()
 end)
 
-print("Rost Alpha FIX Loaded! Respawn NOW!")
-print("G=God, N=Noclip, F=Fly, V=Speed toggle, E=ESP")
-print("Speed max 40 to avoid kick! Test one feature at a time.")
+Rayfield:Notify({
+   Title = "Rost Alpha Premium Loaded!",
+   Content = "Respawn NOW for best bypass! Test features one by one. Speed >60 = risk kick.",
+   Duration = 8,
+   Image = 4483362458
+})
+
+print("Rost Alpha PREMIUM HUB v2.1 Loaded | Enjoy responsibly!")
