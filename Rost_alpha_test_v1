@@ -1,47 +1,36 @@
--- 🗡️ Rost Alpha ApexHub v2026 🔥 | FULL VeryUp Magic Bullets + Fixed Auto Farm | Xeno/Solara/Wave | Undetected
--- Respawn ДО execute + ПОСЛЕ execute обязательно!
+-- Rost Alpha ApexHub v2026 🔥 | Magic Bullets (VeryUp) + ESP Resources | Xeno/Solara/Wave | Undetected
+-- Magic Bullets: Пули в голову сквозь стены (hook FireServer)
+-- ESP Resources: Подсветка сундуков/шкафов/спальников/камней (Highlight + Text)
+-- Hotkeys: G=God | N=Noclip | F=Fly | V=Speed | M=Magic Bullets | E=ESP Resources
+-- Respawn ДО execute и ПОСЛЕ execute обязательно!
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-local PathfindingService = game:GetService("PathfindingService")
-local LocalPlayer = Players.LocalPlayer
+local UIS = game:GetService("UserInputService")
 local Camera = workspace.CurrentCamera
+local LP = Players.LocalPlayer
 
--- States
-local Toggles = {
-   God = false,
-   Noclip = false,
-   Fly = false,
-   MagicBullets = false,
-   NoRecoil = false,
-   KillAura = false,
-   AutoFarm = false,
-   AntiKick = false
-}
-local Sliders = {
-   FlySpeed = 50,
-   WalkSpeed = 16,
-   KillAuraRadius = 20,
-   FarmRadius = 300,
-   FarmSpeed = 40
-}
-local FarmTargets = {"Stone", "Chest", "Tree", "Bed", "Cabinet", "Rock", "Ore", "Sunduk", "Shkaf", "Spalnik"}
-local Connections = {}
-local ESPObjects = {}
+local God = false
+local Noclip = false
+local Fly = false
+local Speed = 16
+local MagicBullets = false
+local ESPResources = false
 
--- ===== MAGIC BULLETS (VeryUp FULL - через стены, в голову, плавный) =====
+local ResourceHighlights = {}
+
+-- ===== MAGIC BULLETS (VeryUp - through walls to head, smooth) =====
 local mt = getrawmetatable(game)
 local oldNamecall = mt.__namecall
 setreadonly(mt, false)
 mt.__namecall = newcclosure(function(self, ...)
    local args = {...}
-   if Toggles.MagicBullets and getnamecallmethod() == "FireServer" and (self.Name:find("Gun") or self.Name:find("Shoot") or self.Name:find("Bullet") or self.Name:find("Remote")) then
+   if MagicBullets and getnamecallmethod() == "FireServer" and (self.Name:find("Gun") or self.Name:find("Shoot") or self.Name:find("Bullet") or self.Name:find("Remote")) then
       local closest = nil
       local minDist = math.huge
-      local mousePos = Vector2.new(LocalPlayer:GetMouse().X, LocalPlayer:GetMouse().Y)
+      local mousePos = Vector2.new(LP:GetMouse().X, LP:GetMouse().Y)
       for _, plr in pairs(Players:GetPlayers()) do
-         if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("Head") and plr.Character.Humanoid.Health > 0 then
+         if plr ~= LP and plr.Character and plr.Character:FindFirstChild("Head") and plr.Character.Humanoid.Health > 0 then
             local screenPos, onScreen = Camera:WorldToViewportPoint(plr.Character.Head.Position)
             if onScreen then
                local dist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
@@ -60,123 +49,118 @@ mt.__namecall = newcclosure(function(self, ...)
 end)
 setreadonly(mt, true)
 
--- ===== NO RECOIL =====
-Connections.NoRecoil = RunService.Heartbeat:Connect(function()
-   if Toggles.NoRecoil and LocalPlayer.Character then
-      for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
-         if v.Name:find("Recoil") or v.Name:find("Spread") then v.Value = 0 end
-      end
-   end
-end)
-
 -- ===== GOD MODE =====
-Connections.God = RunService.Heartbeat:Connect(function()
-   if Toggles.God and LocalPlayer.Character then
-      local hum = LocalPlayer.Character:FindFirstChild("Humanoid")
+RunService.Heartbeat:Connect(function()
+   if God and LP.Character then
+      local hum = LP.Character:FindFirstChild("Humanoid")
       if hum then hum.Health = hum.MaxHealth end
    end
 end)
 
 -- ===== NOCLIP =====
-Connections.Noclip = RunService.Stepped:Connect(function()
-   if Toggles.Noclip and LocalPlayer.Character then
-      for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+RunService.Stepped:Connect(function()
+   if Noclip and LP.Character then
+      for _, part in pairs(LP.Character:GetDescendants()) do
          if part:IsA("BasePart") then part.CanCollide = false end
       end
    end
 end)
 
--- ===== FLY (Velocity - no back teleport) =====
-Connections.Fly = RunService.Heartbeat:Connect(function()
-   if Toggles.Fly and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-      local hrp = LocalPlayer.Character.HumanoidRootPart
-      local move = Vector3.new()
-      if UserInputService:IsKeyDown(Enum.KeyCode.W) then move += Camera.CFrame.LookVector end
-      if UserInputService:IsKeyDown(Enum.KeyCode.S) then move -= Camera.CFrame.LookVector end
-      if UserInputService:IsKeyDown(Enum.KeyCode.A) then move -= Camera.CFrame.RightVector end
-      if UserInputService:IsKeyDown(Enum.KeyCode.D) then move += Camera.CFrame.RightVector end
-      if UserInputService:IsKeyDown(Enum.KeyCode.Space) then move += Vector3.new(0,1,0) end
-      if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then move -= Vector3.new(0,1,0) end
-      hrp.Velocity = move * Sliders.FlySpeed
-   end
-end)
-
--- ===== KILL AURA =====
-Connections.KillAura = RunService.Heartbeat:Connect(function()
-   if Toggles.KillAura and LocalPlayer.Character then
-      for _, plr in pairs(Players:GetPlayers()) do
-         if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-            local dist = (plr.Character.HumanoidRootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
-            if dist < Sliders.KillAuraRadius then
-               plr.Character.Humanoid.Health = 0
+-- ===== FLY (CFrame - no back teleport) =====
+local FlyConn
+local function ToggleFly()
+   Fly = not Fly
+   if Fly then
+      FlyConn = RunService.RenderStepped:Connect(function()
+         if LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
+            local hrp = LP.Character.HumanoidRootPart
+            local move = Vector3.new()
+            if UIS:IsKeyDown(Enum.KeyCode.W) then move += Camera.CFrame.LookVector end
+            if UIS:IsKeyDown(Enum.KeyCode.S) then move -= Camera.CFrame.LookVector end
+            if UIS:IsKeyDown(Enum.KeyCode.A) then move -= Camera.CFrame.RightVector end
+            if UIS:IsKeyDown(Enum.KeyCode.D) then move += Camera.CFrame.RightVector end
+            if UIS:IsKeyDown(Enum.KeyCode.Space) then move += Vector3.new(0,1,0) end
+            if UIS:IsKeyDown(Enum.KeyCode.LeftShift) then move -= Vector3.new(0,1,0) end
+            if move.Magnitude > 0 then
+               hrp.CFrame += move.Unit * 40 * 0.016
             end
          end
-      end
+      end)
+   else
+      if FlyConn then FlyConn:Disconnect() end
    end
-end)
-
--- ===== ГИБКИЙ AUTO FARM (Pathfinding к ресурсам) =====
-local function FindNearestResource()
-   local nearest = nil
-   local minDist = Sliders.FarmRadius
-   for _, obj in pairs(workspace:GetDescendants()) do
-      for _, target in pairs(FarmTargets) do
-         if obj.Name:lower():find(target:lower()) and obj:IsA("BasePart") then
-            local dist = (obj.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
-            if dist < minDist then
-               nearest = obj
-               minDist = dist
-            end
-         end
-      end
-   end
-   return nearest
 end
 
-local AutoFarmConn
-local function StartAutoFarm()
-   AutoFarmConn = RunService.Heartbeat:Connect(function()
-      if not Toggles.AutoFarm then return end
-      local target = FindNearestResource()
-      if target then
-         local path = PathfindingService:CreatePath({
-            AgentRadius = 3,
-            AgentHeight = 6,
-            AgentCanJump = true,
-            WaypointSpacing = 5
-         })
-         path:ComputeAsync(LocalPlayer.Character.HumanoidRootPart.Position, target.Position)
-         if path.Status == Enum.PathStatus.Success then
-            local waypoints = path:GetWaypoints()
-            for _, wp in pairs(waypoints) do
-               LocalPlayer.Character.Humanoid:MoveTo(wp.Position)
-               LocalPlayer.Character.Humanoid.WalkSpeed = Sliders.FarmSpeed
-               if wp.Action == Enum.PathWaypointAction.Jump then LocalPlayer.Character.Humanoid.Jump = true end
-               wait(0.15)
-            end
+-- ===== SPEED =====
+UIS.InputBegan:Connect(function(input)
+   if input.KeyCode == Enum.KeyCode.V then
+      Speed = Speed == 16 and 40 or 16
+      if LP.Character and LP.Character:FindFirstChild("Humanoid") then
+         LP.Character.Humanoid.WalkSpeed = Speed
+      end
+      print("Speed now: " .. Speed)
+   end
+end)
+
+-- ===== ESP RESOURCES (Chests/Beds/Cabinets/Stones) =====
+local function UpdateResourceESP()
+   for _, obj in pairs(workspace:GetDescendants()) do
+      local name = obj.Name:lower()
+      if name:find("chest") or name:find("sunduk") or name:find("bed") or name:find("spalnik") or name:find("cabinet") or name:find("shkaf") or name:find("stone") or name:find("rock") or name:find("ore") then
+         if not obj:FindFirstChild("ResourceESP") then
+            local hl = Instance.new("Highlight")
+            hl.Name = "ResourceESP"
+            hl.FillColor = Color3.new(0,1,0)
+            hl.OutlineColor = Color3.new(1,1,1)
+            hl.FillTransparency = 0.6
+            hl.OutlineTransparency = 0
+            hl.Parent = obj
+
+            local text = Drawing.new("Text")
+            text.Size = 14
+            text.Outline = true
+            text.Color = Color3.new(0,1,0)
+            text.Center = true
+
+            Connections[obj] = RunService.RenderStepped:Connect(function()
+               local pos, vis = Camera:WorldToViewportPoint(obj.Position)
+               text.Position = Vector2.new(pos.X, pos.Y)
+               text.Text = obj.Name
+               text.Visible = vis
+            end)
+
+            table.insert(ESPObjects, hl)
          end
       end
-   end)
+   end
 end
 
 -- ===== HOTKEYS =====
-UserInputService.InputBegan:Connect(function(input)
-   if input.KeyCode == Enum.KeyCode.G then Toggles.God = not Toggles.God; print("God: " .. tostring(Toggles.God)) end
-   if input.KeyCode == Enum.KeyCode.N then Toggles.Noclip = not Toggles.Noclip; print("Noclip: " .. tostring(Toggles.Noclip)) end
-   if input.KeyCode == Enum.KeyCode.F then Toggles.Fly = not Toggles.Fly; print("Fly: " .. tostring(Toggles.Fly)) end
-   if input.KeyCode == Enum.KeyCode.V then Sliders.WalkSpeed = Sliders.WalkSpeed == 16 and 40 or 16; print("Speed: " .. Sliders.WalkSpeed) end
-   if input.KeyCode == Enum.KeyCode.K then Toggles.KillAura = not Toggles.KillAura; print("Kill Aura: " .. tostring(Toggles.KillAura)) end
-   if input.KeyCode == Enum.KeyCode.L then Toggles.AutoFarm = not Toggles.AutoFarm; if Toggles.AutoFarm then StartAutoFarm() end; print("Auto Farm: " .. tostring(Toggles.AutoFarm)) end
-end)
-
--- ===== RESPAWN HOOK =====
-LocalPlayer.CharacterAdded:Connect(function()
-   wait(1)
-   if LocalPlayer.Character then
-      LocalPlayer.Character.Humanoid.WalkSpeed = Sliders.WalkSpeed
+UIS.InputBegan:Connect(function(input)
+   if input.KeyCode == Enum.KeyCode.G then God = not God; print("God: " .. tostring(God)) end
+   if input.KeyCode == Enum.KeyCode.N then Noclip = not Noclip; print("Noclip: " .. tostring(Noclip)) end
+   if input.KeyCode == Enum.KeyCode.F then ToggleFly(); print("Fly: " .. tostring(Fly)) end
+   if input.KeyCode == Enum.KeyCode.V then Speed = Speed == 16 and 40 or 16; print("Speed: " .. Speed) end
+   if input.KeyCode == Enum.KeyCode.M then MagicBullets = not MagicBullets; print("Magic Bullets: " .. tostring(MagicBullets)) end
+   if input.KeyCode == Enum.KeyCode.E then
+      ESPResources = not ESPResources
+      if ESPResources then
+         Connections.ESP = RunService.Heartbeat:Connect(UpdateResourceESP)
+      else
+         if Connections.ESP then Connections.ESP:Disconnect() end
+         for _, hl in pairs(ESPObjects) do hl:Destroy() end
+         ESPObjects = {}
+      end
+      print("ESP Resources: " .. tostring(ESPResources))
    end
 end)
 
+-- ===== RESPAWN HOOK =====
+LP.CharacterAdded:Connect(function()
+   wait(1)
+   if LP.Character then LP.Character.Humanoid.WalkSpeed = Speed end
+end)
+
 print("Rost Alpha ApexHub v2026 Loaded!")
-print("G = God | N = Noclip | F = Fly | V = Speed | K = Kill Aura | L = Auto Farm")
+print("G = God | N = Noclip | F = Fly | V = Speed | M = Magic Bullets | E = ESP Resources")
 print("RESPAWN ДО execute и ПОСЛЕ execute!")
