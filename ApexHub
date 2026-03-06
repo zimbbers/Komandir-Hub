@@ -1,365 +1,587 @@
--- 🗡️ Blox Fruits Apex Dominion Hub v2026 🔥
--- Full Redz + Hoho + VeryUp Features | Rayfield GUI | No Key | User: " .. game.Players.LocalPlayer.Name .. "
--- Auto Farm | Sea Hop | Auto Raid | Fruit Sniper | ESP | Teleports | God/Fly/Noclip | Stats/Rebirth | Kill Aura | Magic Bullets | Inf Ammo | No Recoil
+--[[
+    Blox Fruits Apex Dominion Hub v2026
+    Полноценный скрипт с автофармом, ESP, телепортами и всем необходимым
+    Основан на Rayfield GUI
+]]
 
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+-- Подключаем Rayfield (актуальная ссылка)
+local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Rayfield/main/source'))()
 
-local LocalPlayer = game.Players.LocalPlayer
-local PlayerName = LocalPlayer.Name
-
-local Window = Rayfield:CreateWindow({
-   Name = "🗡️ Blox Fruits Apex Dominion Hub v2026 🔥 | " .. PlayerName,
-   LoadingTitle = "Apex Dominion Loading...",
-   LoadingSubtitle = "Redz + Hoho + VeryUp | Full Premium Features",
-   ConfigurationSaving = {
-      Enabled = true,
-      FolderName = "ApexDominion",
-      FileName = "Config2026"
-   },
-   KeySystem = false
-})
-
-Rayfield:Notify({
-   Title = "Добро пожаловать, " .. PlayerName .. "!",
-   Content = "Apex Dominion загружен. Полный набор функций от Redz/Hoho/VeryUp.",
-   Duration = 6.5,
-   Image = 4483362458  -- Красивая иконка меча
-})
-
-local FarmTab = Window:CreateTab("⛏️ Auto Farm", 4483362458)
-local CombatTab = Window:CreateTab("⚔️ Combat", 4483362458)
-local MovementTab = Window:CreateTab("🚀 Movement", 4483362458)
-local VisualsTab = Window:CreateTab("👁️ ESP", 4483362458)
-local TeleportTab = Window:CreateTab("📍 Teleports", 4483362458)
-local StatsTab = Window:CreateTab("📊 Stats/Rebirth", 4483362458)
-local MiscTab = Window:CreateTab("⚙️ Misc", 4483362458)
-
--- Services
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
-local PathfindingService = game:GetService("PathfindingService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
+-- Имя игрока для приветствия
+local PlayerName = LocalPlayer.Name
+
+-- Основное окно
+local Window = Rayfield:CreateWindow({
+    Name = "🗡️ Blox Fruits Apex Dominion Hub v2026 🔥 | " .. PlayerName,
+    LoadingTitle = "Apex Dominion Loading...",
+    LoadingSubtitle = "Полный спектр функций для фарма",
+    ConfigurationSaving = {
+        Enabled = true,
+        FolderName = "ApexDominion",
+        FileName = "Config2026"
+    },
+    KeySystem = false
+})
+
+-- Приветственное уведомление
+Rayfield:Notify({
+    Title = "Добро пожаловать, " .. PlayerName .. "!",
+    Content = "Apex Dominion загружен. Используй на здоровье!",
+    Duration = 6.5,
+    Image = 4483362458
+})
+
+-- Вкладки
+local FarmTab = Window:CreateTab("⛏️ Фарм", 4483362458)
+local CombatTab = Window:CreateTab("⚔️ Бой", 4483362458)
+local MovementTab = Window:CreateTab("🚀 Передвижение", 4483362458)
+local VisualsTab = Window:CreateTab("👁️ ESP", 4483362458)
+local TeleportTab = Window:CreateTab("📍 Телепорты", 4483362458)
+local StatsTab = Window:CreateTab("📊 Статы", 4483362458)
+local MiscTab = Window:CreateTab("⚙️ Разное", 4483362458)
+
+-- ==================== ПЕРЕМЕННЫЕ ====================
+
 local Toggles = {
-   AutoFarm = false,
-   AutoQuest = false,
-   AutoBoss = false,
-   SeaHop = false,
-   AutoRaid = false,
-   FruitSniper = false,
-   FruitBuyer = false,
-   God = false,
-   Noclip = false,
-   Fly = false,
-   InfAmmo = false,
-   NoRecoil = false,
-   MagicBullets = false,
-   KillAura = false,
-   AutoStats = false,
-   AutoRebirth = false,
-   ESPFruits = false,
-   ESPPlayers = false,
-   ESPBosses = false,
-   ESPMobs = false,
-   InventorySpy = false,
-   ToolSteal = false,
-   AntiKick = false
+    AutoFarm = false,
+    AutoQuest = false,
+    AutoBoss = false,
+    AutoRaid = false,
+    FruitSniper = false,
+    AutoStats = false,
+    AutoHaki = false,
+    KillAura = false,
+    Noclip = false,
+    Fly = false,
+    InfAmmo = false,
+    ESPPlayers = false,
+    ESPMobs = false,
+    ESPFruits = false,
+    ESPChests = false,
+    AntiKick = false
 }
 
 local Sliders = {
-   FarmSpeed = 50,
-   FarmRadius = 500,
-   KillAuraRadius = 20,
-   FlySpeed = 50,
-   WalkSpeed = 16,
-   JumpPower = 50,
-   Melee = 1,
-   Defense = 1,
-   Sword = 1,
-   Gun = 1,
-   DevilFruit = 1
+    FarmRadius = 500,
+    KillAuraRadius = 25,
+    WalkSpeed = 16,
+    JumpPower = 50,
+    FlySpeed = 50,
+    Melee = 1,
+    Defense = 1,
+    Sword = 1,
+    Gun = 1,
+    Fruit = 1
 }
 
 local Connections = {}
 local ESPObjects = {}
 
--- ===== AUTO FARM LEVELS/QUESTS/BOSSES (Redz Hub) =====
-local function AutoFarmLevels()
-   Connections.AutoFarm = RunService.Heartbeat:Connect(function()
-      if not Toggles.AutoFarm then return end
-      local mob = workspace.Enemies:FindFirstChildOfClass("Model")
-      if mob and mob:FindFirstChild("HumanoidRootPart") then
-         LocalPlayer.Character.HumanoidRootPart.CFrame = mob.HumanoidRootPart.CFrame * CFrame.new(0, 10, 0)
-         mob.Humanoid.Health = 0  -- Simulate damage
-      end
-   end)
+-- Удалённая функция для вызовов (CommF_)
+local function RemoteInvoke(...)
+    local args = {...}
+    return ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("CommF_"):InvokeServer(unpack(args))
+end
+
+-- Проверка на наличие персонажа
+local function getChar()
+    return LocalPlayer.Character
+end
+
+local function getHRP()
+    local char = getChar()
+    if char then
+        return char:FindFirstChild("HumanoidRootPart")
+    end
+end
+
+local function getHumanoid()
+    local char = getChar()
+    if char then
+        return char:FindFirstChildOfClass("Humanoid")
+    end
+end
+
+-- ==================== АВТОФАРМ (УРОВНИ / КВЕСТЫ) ====================
+
+local function findClosestMob()
+    local hrp = getHRP()
+    if not hrp then return nil end
+    local closest, dist = nil, math.huge
+    for _, mob in pairs(workspace:FindFirstChild("Enemies"):GetChildren()) do
+        if mob:FindFirstChild("HumanoidRootPart") and mob:FindFirstChild("Humanoid") and mob.Humanoid.Health > 0 then
+            local d = (mob.HumanoidRootPart.Position - hrp.Position).magnitude
+            if d < dist then
+                dist = d
+                closest = mob
+            end
+        end
+    end
+    return closest
+end
+
+local function attackMob(mob)
+    if not mob then return end
+    local hrp = getHRP()
+    if not hrp then return end
+    -- Телепортируемся поближе
+    hrp.CFrame = mob.HumanoidRootPart.CFrame * CFrame.new(0, 5, 0)
+    -- Наносим урон (можно использовать мышь, но проще использовать удалённую функцию атаки, если есть)
+    -- В Blox Fruits атака происходит через экипированное оружие. Мы просто будем нажимать кнопку мыши.
+    VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 1)
+    task.wait(0.1)
+    VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 1)
+end
+
+local function autoFarmLoop()
+    while Toggles.AutoFarm do
+        local mob = findClosestMob()
+        if mob then
+            attackMob(mob)
+        end
+        task.wait(0.1)
+    end
 end
 
 FarmTab:CreateToggle({
-   Name = "Auto Farm Levels",
-   CurrentValue = false,
-   Callback = function(v)
-      Toggles.AutoFarm = v
-      if v then AutoFarmLevels() end
-   end
+    Name = "Автофарм мобов",
+    CurrentValue = false,
+    Callback = function(v)
+        Toggles.AutoFarm = v
+        if v then
+            task.spawn(autoFarmLoop)
+        end
+    end
 })
+
+FarmTab:CreateSlider({
+    Name = "Радиус поиска мобов",
+    Range = {100, 1000},
+    Increment = 50,
+    CurrentValue = Sliders.FarmRadius,
+    Callback = function(v) Sliders.FarmRadius = v end
+})
+
+-- ==================== АВТО-КВЕСТЫ ====================
+
+local function takeQuest()
+    -- Поиск NPC с меткой "!" (обычно это квестодатель)
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v:IsA("Part") and v.Name == "Part" and v.Parent and v.Parent:FindFirstChild("Head") and v.Parent:FindFirstChild("Humanoid") then
+            local npc = v.Parent
+            if npc:FindFirstChild("Dialog") or npc:FindFirstChild("ClickDetector") then
+                -- Подойдём к NPC
+                local hrp = getHRP()
+                if hrp then
+                    hrp.CFrame = npc.HumanoidRootPart.CFrame * CFrame.new(0, 0, 5)
+                    task.wait(0.5)
+                    -- Активируем диалог (например, через ClickDetector)
+                    local cd = npc:FindFirstChildOfClass("ClickDetector")
+                    if cd then
+                        fireclickdetector(cd)
+                    end
+                    -- Выбираем первый вариант (обычно "Take Quest")
+                    task.wait(0.5)
+                    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.One, false, game)
+                    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.One, false, game)
+                end
+                break
+            end
+        end
+    end
+end
 
 FarmTab:CreateToggle({
-   Name = "Auto Quest",
-   CurrentValue = false,
-   Callback = function(v) Toggles.AutoQuest = v end
+    Name = "Авто-квесты (брать задания)",
+    CurrentValue = false,
+    Callback = function(v)
+        Toggles.AutoQuest = v
+        if v then
+            task.spawn(function()
+                while Toggles.AutoQuest do
+                    takeQuest()
+                    task.wait(5)
+                end
+            end)
+        end
+    end
 })
+
+-- ==================== АВТО-БОССЫ ====================
+
+local function findClosestBoss()
+    local hrp = getHRP()
+    if not hrp then return nil end
+    local closest, dist = nil, math.huge
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v:IsA("Model") and v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
+            if string.find(v.Name, "Boss") or string.find(v.Name, "Ship") or string.find(v.Name, "Factory") then
+                local d = (v.HumanoidRootPart.Position - hrp.Position).magnitude
+                if d < dist then
+                    dist = d
+                    closest = v
+                end
+            end
+        end
+    end
+    return closest
+end
 
 FarmTab:CreateToggle({
-   Name = "Auto Boss Farm",
-   CurrentValue = false,
-   Callback = function(v) Toggles.AutoBoss = v end
+    Name = "Авто-боссы",
+    CurrentValue = false,
+    Callback = function(v)
+        Toggles.AutoBoss = v
+        if v then
+            task.spawn(function()
+                while Toggles.AutoBoss do
+                    local boss = findClosestBoss()
+                    if boss then
+                        local hrp = getHRP()
+                        if hrp then
+                            hrp.CFrame = boss.HumanoidRootPart.CFrame * CFrame.new(0, 10, 0)
+                            -- Атакуем
+                            VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 1)
+                            task.wait(0.1)
+                            VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 1)
+                        end
+                    end
+                    task.wait(0.5)
+                end
+            end)
+        end
+    end
 })
+
+-- ==================== СНАЙПЕР ФРУКТОВ ====================
+
+local function buyFruit()
+    -- Пытаемся купить фрукт у продавца (обычно Dealer)
+    local success, result = pcall(function()
+        return RemoteInvoke("PurchaseFruit", "Dealer")
+    end)
+    if success then
+        Rayfield:Notify({
+            Title = "Снайпер фруктов",
+            Content = "Фрукт куплен!",
+            Duration = 3
+        })
+    end
+end
 
 FarmTab:CreateToggle({
-   Name = "Sea Hop (Auto Switch Seas)",
-   CurrentValue = false,
-   Callback = function(v)
-      Toggles.SeaHop = v
-      spawn(function()
-         while Toggles.SeaHop do
-            local sea = (math.random(1,3))
-            LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(sea == 1 and Vector3.new(-384, 73, 95) or sea == 2 and Vector3.new(-1320, 73, 95) or Vector3.new(-5075, 314, -2555))
-            wait(8)
-         end
-      end)
-   end
+    Name = "Снайпер фруктов (покупка у Dealer)",
+    CurrentValue = false,
+    Callback = function(v)
+        Toggles.FruitSniper = v
+        if v then
+            task.spawn(function()
+                while Toggles.FruitSniper do
+                    buyFruit()
+                    task.wait(1)
+                end
+            end)
+        end
+    end
 })
 
-FarmTab:CreateToggle({
-   Name = "Auto Raid",
-   CurrentValue = false,
-   Callback = function(v) Toggles.AutoRaid = v end
-})
+-- ==================== KILL AURA ====================
 
-FarmTab:CreateToggle({
-   Name = "Fruit Sniper (Auto Buy Dealer Fruits)",
-   CurrentValue = false,
-   Callback = function(v)
-      Toggles.FruitSniper = v
-      spawn(function()
-         while Toggles.FruitSniper do
-            ReplicatedStorage.Remotes.CommF_:InvokeServer("PurchaseFruit", "Dealer")
-            wait(1)
-         end
-      end)
-   end
-})
+local function killAuraLoop()
+    while Toggles.KillAura do
+        local hrp = getHRP()
+        if hrp then
+            for _, mob in pairs(workspace.Enemies:GetChildren()) do
+                if mob:FindFirstChild("HumanoidRootPart") and mob:FindFirstChild("Humanoid") and mob.Humanoid.Health > 0 then
+                    local dist = (mob.HumanoidRootPart.Position - hrp.Position).magnitude
+                    if dist <= Sliders.KillAuraRadius then
+                        -- Наносим урон (например, телепортируем к мобу и бьём)
+                        hrp.CFrame = mob.HumanoidRootPart.CFrame * CFrame.new(0, 5, 0)
+                        VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 1)
+                        task.wait(0.05)
+                        VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 1)
+                    end
+                end
+            end
+        end
+        task.wait(0.1)
+    end
+end
 
-FarmTab:CreateToggle({
-   Name = "Fruit Buyer (Auto Buy Shop Fruits)",
-   CurrentValue = false,
-   Callback = function(v) Toggles.FruitBuyer = v end
-})
-
--- ===== COMBAT =====
 CombatTab:CreateToggle({
-   Name = "Kill Aura",
-   CurrentValue = false,
-   Callback = function(v) Toggles.KillAura = v end
+    Name = "Kill Aura",
+    CurrentValue = false,
+    Callback = function(v)
+        Toggles.KillAura = v
+        if v then
+            task.spawn(killAuraLoop)
+        end
+    end
 })
 
 CombatTab:CreateSlider({
-   Name = "Kill Aura Radius",
-   Range = {10, 50},
-   Increment = 5,
-   CurrentValue = 20,
-   Callback = function(v) Sliders.KillAuraRadius = v end
+    Name = "Радиус Kill Aura",
+    Range = {10, 50},
+    Increment = 5,
+    CurrentValue = Sliders.KillAuraRadius,
+    Callback = function(v) Sliders.KillAuraRadius = v end
 })
 
-CombatTab:CreateToggle({
-   Name = "Infinite Ammo",
-   CurrentValue = false,
-   Callback = function(v) Toggles.InfAmmo = v end
-})
-
-CombatTab:CreateToggle({
-   Name = "No Recoil",
-   CurrentValue = false,
-   Callback = function(v) Toggles.NoRecoil = v end
-})
-
-CombatTab:CreateToggle({
-   Name = "Magic Bullets",
-   CurrentValue = false,
-   Callback = function(v) Toggles.MagicBullets = v end
-})
-
--- ===== MOVEMENT =====
-MovementTab:CreateToggle({
-   Name = "God Mode",
-   CurrentValue = false,
-   Callback = function(v) Toggles.God = v end
-})
+-- ==================== NOCLIP ====================
 
 MovementTab:CreateToggle({
-   Name = "Noclip",
-   CurrentValue = false,
-   Callback = function(v) Toggles.Noclip = v end
+    Name = "Noclip (проход сквозь стены)",
+    CurrentValue = false,
+    Callback = function(v)
+        Toggles.Noclip = v
+        if v then
+            Connections.Noclip = RunService.Stepped:Connect(function()
+                local char = getChar()
+                if char then
+                    for _, part in pairs(char:GetDescendants()) do
+                        if part:IsA("BasePart") then
+                            part.CanCollide = false
+                        end
+                    end
+                end
+            end)
+        else
+            if Connections.Noclip then
+                Connections.Noclip:Disconnect()
+                Connections.Noclip = nil
+            end
+        end
+    end
 })
 
+-- ==================== FLY ====================
+
+local flyConnection = nil
+local flyBodyVelocity = nil
+
 MovementTab:CreateToggle({
-   Name = "Fly",
-   CurrentValue = false,
-   Callback = function(v) Toggles.Fly = v end
+    Name = "Fly (полёт)",
+    CurrentValue = false,
+    Callback = function(v)
+        Toggles.Fly = v
+        local hrp = getHRP()
+        if not hrp then return end
+        if v then
+            -- Создаём BodyVelocity
+            flyBodyVelocity = Instance.new("BodyVelocity")
+            flyBodyVelocity.Velocity = Vector3.new(0,0,0)
+            flyBodyVelocity.MaxForce = Vector3.new(4000,4000,4000)
+            flyBodyVelocity.Parent = hrp
+            flyConnection = RunService.Heartbeat:Connect(function()
+                if not Toggles.Fly then return end
+                local moveDir = Vector3.new(0,0,0)
+                if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + Camera.CFrame.LookVector end
+                if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - Camera.CFrame.LookVector end
+                if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - Camera.CFrame.RightVector end
+                if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + Camera.CFrame.RightVector end
+                if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDir = moveDir + Vector3.new(0,1,0) end
+                if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then moveDir = moveDir - Vector3.new(0,1,0) end
+                if moveDir.magnitude > 0 then
+                    flyBodyVelocity.Velocity = moveDir.unit * Sliders.FlySpeed
+                else
+                    flyBodyVelocity.Velocity = Vector3.new(0,0,0)
+                end
+            end)
+        else
+            if flyConnection then
+                flyConnection:Disconnect()
+                flyConnection = nil
+            end
+            if flyBodyVelocity then
+                flyBodyVelocity:Destroy()
+                flyBodyVelocity = nil
+            end
+        end
+    end
 })
 
 MovementTab:CreateSlider({
-   Name = "Walk Speed",
-   Range = {16, 100},
-   Increment = 5,
-   CurrentValue = 16,
-   Callback = function(v) Sliders.WalkSpeed = v end
+    Name = "Скорость полёта",
+    Range = {20, 200},
+    Increment = 10,
+    CurrentValue = Sliders.FlySpeed,
+    Callback = function(v) Sliders.FlySpeed = v end
 })
 
--- ===== VISUALS =====
+-- ==================== ESP ====================
+
+local function createESP(obj, color, text)
+    if not obj or not obj.Parent then return end
+    local highlight = Instance.new("Highlight")
+    highlight.FillColor = color
+    highlight.OutlineColor = Color3.new(1,1,1)
+    highlight.FillTransparency = 0.5
+    highlight.Adornee = obj
+    highlight.Parent = obj
+    ESPObjects[obj] = highlight
+end
+
+local function updateESP()
+    for _, v in pairs(ESPObjects) do
+        if v and v.Adornee and v.Adornee.Parent then
+            -- already exists
+        else
+            if v then v:Destroy() end
+            ESPObjects[_] = nil
+        end
+    end
+    if Toggles.ESPPlayers then
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character and not ESPObjects[player.Character] then
+                createESP(player.Character, Color3.new(1,0,0), player.Name)
+            end
+        end
+    end
+    if Toggles.ESPMobs then
+        for _, mob in pairs(workspace.Enemies:GetChildren()) do
+            if not ESPObjects[mob] then
+                createESP(mob, Color3.new(1,1,0), "Mob")
+            end
+        end
+    end
+    -- фрукты и сундуки можно добавить по аналогии
+end
+
 VisualsTab:CreateToggle({
-   Name = "ESP Fruits",
-   CurrentValue = false,
-   Callback = function(v) Toggles.ESPFruits = v end
+    Name = "ESP игроков",
+    CurrentValue = false,
+    Callback = function(v)
+        Toggles.ESPPlayers = v
+        if not v then
+            for k, v in pairs(ESPObjects) do
+                if v then v:Destroy() end
+            end
+            ESPObjects = {}
+        end
+    end
 })
 
 VisualsTab:CreateToggle({
-   Name = "ESP Players",
-   CurrentValue = false,
-   Callback = function(v) Toggles.ESPPlayers = v end
+    Name = "ESP мобов",
+    CurrentValue = false,
+    Callback = function(v)
+        Toggles.ESPMobs = v
+        if not v then
+            for k, v in pairs(ESPObjects) do
+                if v then v:Destroy() end
+            end
+            ESPObjects = {}
+        end
+    end
 })
 
-VisualsTab:CreateToggle({
-   Name = "ESP Bosses",
-   CurrentValue = false,
-   Callback = function(v) Toggles.ESPBosses = v end
-})
+task.spawn(function()
+    while true do
+        updateESP()
+        task.wait(1)
+    end
+end)
 
-VisualsTab:CreateToggle({
-   Name = "ESP Mobs",
-   CurrentValue = false,
-   Callback = function(v) Toggles.ESPMobs = v end
-})
+-- ==================== ТЕЛЕПОРТЫ ====================
 
--- ===== TELEPORTS =====
-local Teleports = {
-   ["Sea 1 Spawn"] = CFrame.new(-384, 73, 95),
-   ["Sea 2 Spawn"] = CFrame.new(-1320, 73, 95),
-   ["Sea 3 Spawn"] = CFrame.new(-5075, 314, -2555),
-   ["Marine Fortress"] = CFrame.new(3854, 5, 4389),
-   ["Green Zone"] = CFrame.new(-2448, 73, -3215),
-   ["Haunted Castle"] = CFrame.new(-9474, 142, 5566),
-   ["Mansion"] = CFrame.new(-484, 73, 4418),
-   ["Pineapple Village"] = CFrame.new(628, 73, 5523),
-   ["Port Town"] = CFrame.new(1037, 73, 1237),
-   ["Great Tree"] = CFrame.new(2879, 1503, 704),
-   ["Dark Step"] = CFrame.new(4883, 717, 4414),
-   ["Sky Island"] = CFrame.new(-7902, 5636, 85),
-   ["Sea Beast"] = CFrame.new(-6410, 100, 2893),
-   ["Castle on the Sea"] = CFrame.new(-5074, 299, -6961)
+local teleportLocations = {
+    ["Первое море (спавн)"] = CFrame.new(-384, 73, 95),
+    ["Второе море (спавн)"] = CFrame.new(-1320, 73, 95),
+    ["Третье море (спавн)"] = CFrame.new(-5075, 314, -2555),
+    ["Колизей"] = CFrame.new(-1848, 23, -2709),
+    ["Тюрьма"] = CFrame.new(4850, 5, 730),
+    ["Замок"] = CFrame.new(-5500, 300, -5500),
+    ["Фабрика"] = CFrame.new(495, 73, -1350),
+    ["Гора"] = CFrame.new(-2369, 317, -10300)
 }
 
 TeleportTab:CreateDropdown({
-   Name = "Teleport to Location",
-   Options = {"Sea 1 Spawn", "Sea 2 Spawn", "Sea 3 Spawn", "Marine Fortress", "Green Zone", "Haunted Castle", "Mansion", "Pineapple Village", "Port Town", "Great Tree", "Dark Step", "Sky Island", "Sea Beast", "Castle on the Sea"},
-   CurrentOption = {""},
-   Callback = function(Option)
-      LocalPlayer.Character.HumanoidRootPart.CFrame = Teleports[Option]
-   end,
-   MultipleOptions = false
+    Name = "Выбери локацию",
+    Options = {"Первое море (спавн)", "Второе море (спавн)", "Третье море (спавн)", "Колизей", "Тюрьма", "Замок", "Фабрика", "Гора"},
+    CurrentOption = {""},
+    Callback = function(option)
+        local cf = teleportLocations[option]
+        if cf then
+            local hrp = getHRP()
+            if hrp then
+                hrp.CFrame = cf
+            end
+        end
+    end,
+    MultipleOptions = false
 })
 
--- ===== STATS / REBIRTH =====
-StatsTab:CreateToggle({
-   Name = "Auto Stats",
-   CurrentValue = false,
-   Callback = function(v)
-      Toggles.AutoStats = v
-      spawn(function()
-         while Toggles.AutoStats do
-            ReplicatedStorage.Remotes.CommF_:InvokeServer("AddPoint", "Melee", Sliders.Melee)
-            ReplicatedStorage.Remotes.CommF_:InvokeServer("AddPoint", "Defense", Sliders.Defense)
-            ReplicatedStorage.Remotes.CommF_:InvokeServer("AddPoint", "Sword", Sliders.Sword)
-            ReplicatedStorage.Remotes.CommF_:InvokeServer("AddPoint", "Gun", Sliders.Gun)
-            ReplicatedStorage.Remotes.CommF_:InvokeServer("AddPoint", "DevilFruit", Sliders.DevilFruit)
-            wait(0.1)
-         end
-      end)
-   end
-})
+-- ==================== АВТО-СТАТЫ ====================
 
-StatsTab:CreateSlider({
-   Name = "Melee Points",
-   Range = {1, 100},
-   Increment = 10,
-   CurrentValue = 1,
-   Callback = function(v) Sliders.Melee = v end
-})
-
-StatsTab:CreateSlider({
-   Name = "Defense Points",
-   Range = {1, 100},
-   Increment = 10,
-   CurrentValue = 1,
-   Callback = function(v) Sliders.Defense = v end
-})
-
-StatsTab:CreateSlider({
-   Name = "Sword Points",
-   Range = {1, 100},
-   Increment = 10,
-   CurrentValue = 1,
-   Callback = function(v) Sliders.Sword = v end
-})
-
-StatsTab:CreateSlider({
-   Name = "Gun Points",
-   Range = {1, 100},
-   Increment = 10,
-   CurrentValue = 1,
-   Callback = function(v) Sliders.Gun = v end
-})
-
-StatsTab:CreateSlider({
-   Name = "DevilFruit Points",
-   Range = {1, 100},
-   Increment = 10,
-   CurrentValue = 1,
-   Callback = function(v) Sliders.DevilFruit = v end
-})
+local function addStats()
+    while Toggles.AutoStats do
+        local points = LocalPlayer.PlayerGui.Main.PlayerStats.Points.Text
+        points = tonumber(points)
+        if points and points > 0 then
+            local stats = {"Melee", "Defense", "Sword", "Gun", "DevilFruit"}
+            for _, stat in pairs(stats) do
+                RemoteInvoke("AddPoint", stat, 1)
+                task.wait(0.1)
+            end
+        end
+        task.wait(1)
+    end
+end
 
 StatsTab:CreateToggle({
-   Name = "Auto Rebirth",
-   CurrentValue = false,
-   Callback = function(v) Toggles.AutoRebirth = v end
+    Name = "Авто-статы (равномерно)",
+    CurrentValue = false,
+    Callback = function(v)
+        Toggles.AutoStats = v
+        if v then
+            task.spawn(addStats)
+        end
+    end
 })
 
--- ===== MISC =====
-MiscTab:CreateButton({
-   Name = "Respawn",
-   Callback = function() LocalPlayer.Character:BreakJoints() end
-})
+-- ==================== АНТИ-КИК ====================
 
 MiscTab:CreateToggle({
-   Name = "Anti-Kick",
-   CurrentValue = false,
-   Callback = function(v) Toggles.AntiKick = v end
+    Name = "Анти-кик (имитация активности)",
+    CurrentValue = false,
+    Callback = function(v)
+        Toggles.AntiKick = v
+        if v then
+            local VirtualUser = game:GetService("VirtualUser")
+            LocalPlayer.Idled:Connect(function()
+                VirtualUser:CaptureController()
+                VirtualUser:ClickButton2(Vector2.new())
+            end)
+        end
+    end
 })
 
--- ===== RESPAWN HOOK =====
-LocalPlayer.CharacterAdded:Connect(function()
-   task.wait(1)
-end)
+-- ==================== КНОПКА РЕСПАВНА ====================
+
+MiscTab:CreateButton({
+    Name = "Респавн (самоубийство)",
+    Callback = function()
+        local char = getChar()
+        if char then
+            char:BreakJoints()
+        end
+    end
+})
+
+-- ==================== ЗАВЕРШЕНИЕ ====================
 
 Rayfield:Notify({
-   Title = "Apex Dominion Hub Loaded!",
-   Content = "Full Redz/Hoho/VeryUp Features Ready | Enjoy, " .. PlayerName .. "!",
-   Duration = 6.5,
-   Image = 4483362458
+    Title = "Apex Dominion Hub",
+    Content = "Все функции загружены. Приятной игры!",
+    Duration = 5
 })
 
-print("Blox Fruits Apex Dominion Hub v2026 Loaded! Full Features Ready!")
+print("Apex Dominion Hub v2026 успешно загружен!")
