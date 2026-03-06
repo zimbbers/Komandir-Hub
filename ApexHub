@@ -26,15 +26,13 @@ Rayfield:Notify({
    Image = 4483362458  -- Красивая иконка меча
 })
 
-local Tabs = {
-   Farm = Window:CreateTab("⛏️ Auto Farm", 4483362458),
-   Combat = Window:CreateTab("⚔️ Combat", 4483362458),
-   Movement = Window:CreateTab("🚀 Movement", 4483362458),
-   Visuals = Window:CreateTab("👁️ ESP", 4483362458),
-   Teleport = Window:CreateTab("📍 Teleports", 4483362458),
-   Stats = Window:CreateTab("📊 Stats/Rebirth", 4483362458),
-   Misc = Window:CreateTab("⚙️ Misc", 4483362458)
-}
+local FarmTab = Window:CreateTab("⛏️ Auto Farm", 4483362458)
+local CombatTab = Window:CreateTab("⚔️ Combat", 4483362458)
+local MovementTab = Window:CreateTab("🚀 Movement", 4483362458)
+local VisualsTab = Window:CreateTab("👁️ ESP", 4483362458)
+local TeleportTab = Window:CreateTab("📍 Teleports", 4483362458)
+local StatsTab = Window:CreateTab("📊 Stats/Rebirth", 4483362458)
+local MiscTab = Window:CreateTab("⚙️ Misc", 4483362458)
 
 -- Services
 local Players = game:GetService("Players")
@@ -88,7 +86,7 @@ local Sliders = {
 local Connections = {}
 local ESPObjects = {}
 
--- ===== AUTO FARM LEVELS (Redz Style) =====
+-- ===== AUTO FARM LEVELS/QUESTS/BOSSES (Redz Hub) =====
 local function AutoFarmLevels()
    Connections.AutoFarm = RunService.Heartbeat:Connect(function()
       if not Toggles.AutoFarm then return end
@@ -154,6 +152,12 @@ FarmTab:CreateToggle({
          end
       end)
    end
+})
+
+FarmTab:CreateToggle({
+   Name = "Fruit Buyer (Auto Buy Shop Fruits)",
+   CurrentValue = false,
+   Callback = function(v) Toggles.FruitBuyer = v end
 })
 
 -- ===== COMBAT =====
@@ -233,6 +237,12 @@ VisualsTab:CreateToggle({
    Name = "ESP Bosses",
    CurrentValue = false,
    Callback = function(v) Toggles.ESPBosses = v end
+})
+
+VisualsTab:CreateToggle({
+   Name = "ESP Mobs",
+   CurrentValue = false,
+   Callback = function(v) Toggles.ESPMobs = v end
 })
 
 -- ===== TELEPORTS =====
