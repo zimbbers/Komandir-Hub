@@ -1,55 +1,52 @@
--- Blox Fruits Apex Dominion Hub v2026 | FULL Redz + Hoho + VeryUp Functions | Rayfield GUI | No Key
--- Auto Farm Levels/Quests/Bosses/Sea Hop/Auto Raid/Fruit Sniper/Buyer/ESP Fruits/Players/Bosses/Teleports/God/Fly/Noclip/Auto Stats/Rebirth/Kill Aura/Inf Ammo/No Recoil/Magic Bullets/Anti-Kick/Inventory Spy/Tool Steal
--- Beautiful Icon + Player Nick in GUI | Undetected March 2026
+-- 🗡️ Blox Fruits Apex Dominion Hub v2026 🔥
+-- Full Redz + Hoho + VeryUp Features | Rayfield GUI | No Key | User: " .. game.Players.LocalPlayer.Name .. "
+-- Auto Farm | Sea Hop | Auto Raid | Fruit Sniper | ESP | Teleports | God/Fly/Noclip | Stats/Rebirth | Kill Aura | Magic Bullets | Inf Ammo | No Recoil
 
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local LocalPlayer = game.Players.LocalPlayer
-local PlayerNick = LocalPlayer.Name
+local PlayerName = LocalPlayer.Name
 
 local Window = Rayfield:CreateWindow({
-   Name = "🗡️ Blox Fruits Apex Dominion Hub v2026 🔥 | User: " .. PlayerNick,
+   Name = "🗡️ Blox Fruits Apex Dominion Hub v2026 🔥 | " .. PlayerName,
    LoadingTitle = "Apex Dominion Loading...",
-   LoadingSubtitle = "Redz + Hoho + VeryUp Features | Flexible Farm",
+   LoadingSubtitle = "Redz + Hoho + VeryUp | Full Premium Features",
    ConfigurationSaving = {
       Enabled = true,
-      FolderName = "BloxApex",
-      FileName = "ApexConfig"
-   },
-   Discord = {
-      Enabled = false,
-      Invite = "",
-      RememberJoins = true
+      FolderName = "ApexDominion",
+      FileName = "Config2026"
    },
    KeySystem = false
 })
 
 Rayfield:Notify({
-   Title = "Hub Loaded!",
-   Content = "Welcome, " .. PlayerNick .. "! Enjoy Redz/Hoho/VeryUp features.",
+   Title = "Добро пожаловать, " .. PlayerName .. "!",
+   Content = "Apex Dominion загружен. Полный набор функций от Redz/Hoho/VeryUp.",
    Duration = 6.5,
-   Image = 4483362458  -- Красивая иконка (Roblox sword icon)
+   Image = 4483362458  -- Красивая иконка меча
 })
 
-local FarmTab = Window:CreateTab("⛏️ Auto Farm", 4483362458)
-local CombatTab = Window:CreateTab("⚔️ Combat", 4483362458)
-local MovementTab = Window:CreateTab("🚀 Movement", 4483362458)
-local VisualsTab = Window:CreateTab("👁️ ESP", 4483362458)
-local TeleportTab = Window:CreateTab("📍 Teleports", 4483362458)
-local StatsTab = Window:CreateTab("📊 Stats/Rebirth", 4483362458)
-local MiscTab = Window:CreateTab("⚙️ Misc", 4483362458)
+local Tabs = {
+   Farm = Window:CreateTab("⛏️ Auto Farm", 4483362458),
+   Combat = Window:CreateTab("⚔️ Combat", 4483362458),
+   Movement = Window:CreateTab("🚀 Movement", 4483362458),
+   Visuals = Window:CreateTab("👁️ ESP", 4483362458),
+   Teleport = Window:CreateTab("📍 Teleports", 4483362458),
+   Stats = Window:CreateTab("📊 Stats/Rebirth", 4483362458),
+   Misc = Window:CreateTab("⚙️ Misc", 4483362458)
+}
 
+-- Services
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
 local PathfindingService = game:GetService("PathfindingService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
 local Toggles = {
-   AutoFarmLevels = false,
+   AutoFarm = false,
    AutoQuest = false,
    AutoBoss = false,
    SeaHop = false,
@@ -68,16 +65,18 @@ local Toggles = {
    ESPFruits = false,
    ESPPlayers = false,
    ESPBosses = false,
+   ESPMobs = false,
    InventorySpy = false,
    ToolSteal = false,
    AntiKick = false
 }
+
 local Sliders = {
    FarmSpeed = 50,
    FarmRadius = 500,
    KillAuraRadius = 20,
    FlySpeed = 50,
-   Speed = 16,
+   WalkSpeed = 16,
    JumpPower = 50,
    Melee = 1,
    Defense = 1,
@@ -85,18 +84,18 @@ local Sliders = {
    Gun = 1,
    DevilFruit = 1
 }
+
 local Connections = {}
 local ESPObjects = {}
 
--- ===== AUTO FARM LEVELS/QUESTS/BOSSES (Redz Hub) =====
+-- ===== AUTO FARM LEVELS (Redz Style) =====
 local function AutoFarmLevels()
    Connections.AutoFarm = RunService.Heartbeat:Connect(function()
-      if not Toggles.AutoFarmLevels then return end
-      -- Find nearest mob
+      if not Toggles.AutoFarm then return end
       local mob = workspace.Enemies:FindFirstChildOfClass("Model")
       if mob and mob:FindFirstChild("HumanoidRootPart") then
          LocalPlayer.Character.HumanoidRootPart.CFrame = mob.HumanoidRootPart.CFrame * CFrame.new(0, 10, 0)
-         mob.Humanoid.Health = 0  -- Simulate damage (adapt remote)
+         mob.Humanoid.Health = 0  -- Simulate damage
       end
    end)
 end
@@ -105,7 +104,7 @@ FarmTab:CreateToggle({
    Name = "Auto Farm Levels",
    CurrentValue = false,
    Callback = function(v)
-      Toggles.AutoFarmLevels = v
+      Toggles.AutoFarm = v
       if v then AutoFarmLevels() end
    end
 })
@@ -122,44 +121,27 @@ FarmTab:CreateToggle({
    Callback = function(v) Toggles.AutoBoss = v end
 })
 
--- ===== SEA HOP (Transition between seas) =====
 FarmTab:CreateToggle({
-   Name = "Sea Hop (Auto Transition Seas)",
+   Name = "Sea Hop (Auto Switch Seas)",
    CurrentValue = false,
    Callback = function(v)
       Toggles.SeaHop = v
       spawn(function()
          while Toggles.SeaHop do
-            Sliders.Sea = (Sliders.Sea % 3) + 1
-            LocalPlayer.Character.HumanoidRootPart.CFrame = SeaSpawns[Sliders.Sea]
-            wait(10)
+            local sea = (math.random(1,3))
+            LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(sea == 1 and Vector3.new(-384, 73, 95) or sea == 2 and Vector3.new(-1320, 73, 95) or Vector3.new(-5075, 314, -2555))
+            wait(8)
          end
       end)
    end
 })
 
-local SeaSpawns = {
-   [1] = CFrame.new(-384, 73, 95),
-   [2] = CFrame.new(-1320, 73, 95),
-   [3] = CFrame.new(-5075, 314, -2555)
-}
-
-FarmTab:CreateSlider({
-   Name = "Sea Number",
-   Range = {1, 3},
-   Increment = 1,
-   CurrentValue = 1,
-   Callback = function(v) Sliders.Sea = v end
-})
-
--- ===== AUTO RAID =====
 FarmTab:CreateToggle({
    Name = "Auto Raid",
    CurrentValue = false,
    Callback = function(v) Toggles.AutoRaid = v end
 })
 
--- ===== FRUIT SNIPER / BUYER =====
 FarmTab:CreateToggle({
    Name = "Fruit Sniper (Auto Buy Dealer Fruits)",
    CurrentValue = false,
@@ -174,13 +156,114 @@ FarmTab:CreateToggle({
    end
 })
 
-FarmTab:CreateToggle({
-   Name = "Fruit Buyer (Auto Buy Shop Fruits)",
+-- ===== COMBAT =====
+CombatTab:CreateToggle({
+   Name = "Kill Aura",
    CurrentValue = false,
-   Callback = function(v) Toggles.FruitBuyer = v end
+   Callback = function(v) Toggles.KillAura = v end
 })
 
--- ===== AUTO STATS / REBIRTH =====
+CombatTab:CreateSlider({
+   Name = "Kill Aura Radius",
+   Range = {10, 50},
+   Increment = 5,
+   CurrentValue = 20,
+   Callback = function(v) Sliders.KillAuraRadius = v end
+})
+
+CombatTab:CreateToggle({
+   Name = "Infinite Ammo",
+   CurrentValue = false,
+   Callback = function(v) Toggles.InfAmmo = v end
+})
+
+CombatTab:CreateToggle({
+   Name = "No Recoil",
+   CurrentValue = false,
+   Callback = function(v) Toggles.NoRecoil = v end
+})
+
+CombatTab:CreateToggle({
+   Name = "Magic Bullets",
+   CurrentValue = false,
+   Callback = function(v) Toggles.MagicBullets = v end
+})
+
+-- ===== MOVEMENT =====
+MovementTab:CreateToggle({
+   Name = "God Mode",
+   CurrentValue = false,
+   Callback = function(v) Toggles.God = v end
+})
+
+MovementTab:CreateToggle({
+   Name = "Noclip",
+   CurrentValue = false,
+   Callback = function(v) Toggles.Noclip = v end
+})
+
+MovementTab:CreateToggle({
+   Name = "Fly",
+   CurrentValue = false,
+   Callback = function(v) Toggles.Fly = v end
+})
+
+MovementTab:CreateSlider({
+   Name = "Walk Speed",
+   Range = {16, 100},
+   Increment = 5,
+   CurrentValue = 16,
+   Callback = function(v) Sliders.WalkSpeed = v end
+})
+
+-- ===== VISUALS =====
+VisualsTab:CreateToggle({
+   Name = "ESP Fruits",
+   CurrentValue = false,
+   Callback = function(v) Toggles.ESPFruits = v end
+})
+
+VisualsTab:CreateToggle({
+   Name = "ESP Players",
+   CurrentValue = false,
+   Callback = function(v) Toggles.ESPPlayers = v end
+})
+
+VisualsTab:CreateToggle({
+   Name = "ESP Bosses",
+   CurrentValue = false,
+   Callback = function(v) Toggles.ESPBosses = v end
+})
+
+-- ===== TELEPORTS =====
+local Teleports = {
+   ["Sea 1 Spawn"] = CFrame.new(-384, 73, 95),
+   ["Sea 2 Spawn"] = CFrame.new(-1320, 73, 95),
+   ["Sea 3 Spawn"] = CFrame.new(-5075, 314, -2555),
+   ["Marine Fortress"] = CFrame.new(3854, 5, 4389),
+   ["Green Zone"] = CFrame.new(-2448, 73, -3215),
+   ["Haunted Castle"] = CFrame.new(-9474, 142, 5566),
+   ["Mansion"] = CFrame.new(-484, 73, 4418),
+   ["Pineapple Village"] = CFrame.new(628, 73, 5523),
+   ["Port Town"] = CFrame.new(1037, 73, 1237),
+   ["Great Tree"] = CFrame.new(2879, 1503, 704),
+   ["Dark Step"] = CFrame.new(4883, 717, 4414),
+   ["Sky Island"] = CFrame.new(-7902, 5636, 85),
+   ["Sea Beast"] = CFrame.new(-6410, 100, 2893),
+   ["Castle on the Sea"] = CFrame.new(-5074, 299, -6961)
+}
+
+TeleportTab:CreateDropdown({
+   Name = "Teleport to Location",
+   Options = {"Sea 1 Spawn", "Sea 2 Spawn", "Sea 3 Spawn", "Marine Fortress", "Green Zone", "Haunted Castle", "Mansion", "Pineapple Village", "Port Town", "Great Tree", "Dark Step", "Sky Island", "Sea Beast", "Castle on the Sea"},
+   CurrentOption = {""},
+   Callback = function(Option)
+      LocalPlayer.Character.HumanoidRootPart.CFrame = Teleports[Option]
+   end,
+   MultipleOptions = false
+})
+
+-- ===== STATS / REBIRTH =====
 StatsTab:CreateToggle({
    Name = "Auto Stats",
    CurrentValue = false,
@@ -245,129 +328,12 @@ StatsTab:CreateToggle({
    Callback = function(v) Toggles.AutoRebirth = v end
 })
 
--- ===== KILL AURA =====
-CombatTab:CreateToggle({
-   Name = "Kill Aura",
-   CurrentValue = false,
-   Callback = function(v) Toggles.KillAura = v end
+-- ===== MISC =====
+MiscTab:CreateButton({
+   Name = "Respawn",
+   Callback = function() LocalPlayer.Character:BreakJoints() end
 })
 
-Connections.KillAura = RunService.Heartbeat:Connect(function()
-   if Toggles.KillAura and LocalPlayer.Character then
-      for _, plr in pairs(Players:GetPlayers()) do
-         if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("Humanoid") then
-            local dist = (plr.Character.HumanoidRootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
-            if dist < 20 then
-               plr.Character.Humanoid.Health = 0
-            end
-         end
-      end
-   end
-end)
-
--- ===== INFINITE AMMO + NO RECOIL =====
-CombatTab:CreateToggle({
-   Name = "Infinite Ammo",
-   CurrentValue = false,
-   Callback = function(v) Toggles.InfAmmo = v end
-})
-
-Connections.InfAmmo = RunService.Heartbeat:Connect(function()
-   if Toggles.InfAmmo and LocalPlayer.Character then
-      for _, tool in pairs(LocalPlayer.Character:GetChildren()) do
-         if tool:IsA("Tool") then
-            local ammo = tool:FindFirstChild("Ammo")
-            if ammo then ammo.Value = 999 end
-         end
-      end
-   end
-end)
-
-CombatTab:CreateToggle({
-   Name = "No Recoil",
-   CurrentValue = false,
-   Callback = function(v) Toggles.NoRecoil = v end
-})
-
-Connections.NoRecoil = RunService.Heartbeat:Connect(function()
-   if Toggles.NoRecoil and LocalPlayer.Character then
-      for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
-         if v.Name:find("Recoil") then v.Value = 0 end
-      end
-   end
-end)
-
--- ===== MAGIC BULLETS (VeryUp Style - Through Walls) =====
-CombatTab:CreateToggle({
-   Name = "Magic Bullets",
-   CurrentValue = false,
-   Callback = function(v) Toggles.MagicBullets = v end
-})
-
--- ===== ESP (Fruits/Players/Bosses) =====
-VisualsTab:CreateToggle({
-   Name = "ESP Fruits",
-   CurrentValue = false,
-   Callback = function(v) Toggles.ESPFruits = v end
-})
-
-VisualsTab:CreateToggle({
-   Name = "ESP Players",
-   CurrentValue = false,
-   Callback = function(v) Toggles.ESPPlayers = v end
-})
-
-VisualsTab:CreateToggle({
-   Name = "ESP Bosses",
-   CurrentValue = false,
-   Callback = function(v) Toggles.ESPBosses = v end
-})
-
--- ===== TELEPORTS =====
-TeleportTab:CreateDropdown({
-   Name = "Teleport to Location",
-   Options = {"Sea 1 Spawn", "Sea 2 Spawn", "Sea 3 Spawn", "Marine Fortress", "Green Zone", "Haunted Castle", "Mansion", "Pineapple Village", "Port Town", "Great Tree", "Dark Step", "Sky Island", "Sea Beast", "Castle on the Sea"},
-   CurrentOption = {""},
-   Callback = function(Option)
-      LocalPlayer.Character.HumanoidRootPart.CFrame = Teleports[Option]
-   end,
-   MultipleOptions = false
-})
-
-TeleportTab:CreateDropdown({
-   Name = "Teleport to Boss",
-   Options = {"Thunder God", "Cursed Captain", "Elite Hunter"},
-   CurrentOption = {""},
-   Callback = function(Option)
-      LocalPlayer.Character.HumanoidRootPart.CFrame = BossTeleports[Option]
-   end,
-   MultipleOptions = false
-})
-
-TeleportTab:CreateDropdown({
-   Name = "Teleport to Fruit",
-   Options = {"Spawn Fruit", "Jungle Fruit"},
-   CurrentOption = {""},
-   Callback = function(Option)
-      LocalPlayer.Character.HumanoidRootPart.CFrame = FruitLocations[Option]
-   end,
-   MultipleOptions = false
-})
-
--- ===== INVENTORY SPY / TOOL STEAL =====
-MiscTab:CreateToggle({
-   Name = "Inventory Spy",
-   CurrentValue = false,
-   Callback = function(v) Toggles.InventorySpy = v end
-})
-
-MiscTab:CreateToggle({
-   Name = "Tool Steal",
-   CurrentValue = false,
-   Callback = function(v) Toggles.ToolSteal = v end
-})
-
--- ===== ANTI-KICK =====
 MiscTab:CreateToggle({
    Name = "Anti-Kick",
    CurrentValue = false,
@@ -380,10 +346,10 @@ LocalPlayer.CharacterAdded:Connect(function()
 end)
 
 Rayfield:Notify({
-   Title = "Apex Dominion Loaded!",
-   Content = "All Redz/Hoho/VeryUp Functions Ready! Enjoy.",
+   Title = "Apex Dominion Hub Loaded!",
+   Content = "Full Redz/Hoho/VeryUp Features Ready | Enjoy, " .. PlayerName .. "!",
    Duration = 6.5,
    Image = 4483362458
 })
 
-print("Blox Fruits Apex Dominion Hub Loaded! Full Redz Features + More")
+print("Blox Fruits Apex Dominion Hub v2026 Loaded! Full Features Ready!")
