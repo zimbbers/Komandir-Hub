@@ -1,47 +1,6 @@
--- 🗡️ Rost Alpha ApexHub v2026 🔥 | FULL VeryUp Style | Rayfield GUI | No Key
--- Welcome Message | Custom Icon & Name | Smooth Animations (Tween) | Theme Switch
--- Magic Bullets FULL (Through Walls, Smooth Lock) | Flexible Auto Farm (Pathfind) | God/Noclip/Fly/ESP/Kill Aura
--- Respawn BEFORE & AFTER Execute | Xeno/Solara/Wave | Undetected
+-- 🗡️ Rost Alpha ApexHub v2026 🔥 | FULL VeryUp Magic Bullets + Fixed Auto Farm | Xeno/Solara/Wave | Undetected
+-- Respawn ДО execute + ПОСЛЕ execute обязательно!
 
-local TweenService = game:GetService("TweenService")
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
-
-local LocalPlayer = game.Players.LocalPlayer
-local PlayerName = LocalPlayer.Name
-
--- ===== SMOOTH WINDOW FADE IN =====
-local Window = Rayfield:CreateWindow({
-   Name = "🗡️ Rost Alpha ApexHub v2026 🔥 | " .. PlayerName,
-   LoadingTitle = "ApexHub Loading...",
-   LoadingSubtitle = "VeryUp Style | Smooth Animations",
-   ConfigurationSaving = {
-      Enabled = true,
-      FolderName = "ApexHub",
-      FileName = "Config"
-   },
-   KeySystem = false
-})
-
--- Плавное появление окна
-local fadeTween = TweenService:Create(Window.Flags, TweenInfo.new(1.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {BackgroundTransparency = 0})
-fadeTween:Play()
-
-Rayfield:Notify({
-   Title = "Welcome to ApexHub!",
-   Content = "Full VeryUp Features Loaded | Enjoy, " .. PlayerName .. "!",
-   Duration = 6.5,
-   Image = 4483362458  -- Красивая иконка меча (в углу)
-})
-
--- Tabs
-local CombatTab = Window:CreateTab("⚔️ Combat", 4483362458)
-local MovementTab = Window:CreateTab("🚀 Movement", nil)
-local VisualsTab = Window:CreateTab("👁️ ESP", nil)
-local FarmTab = Window:CreateTab("⛏️ Auto Farm", nil)
-local SettingsTab = Window:CreateTab("⚙️ Settings", nil)
-local MiscTab = Window:CreateTab("Misc", nil)
-
--- Services
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -56,26 +15,22 @@ local Toggles = {
    Fly = false,
    MagicBullets = false,
    NoRecoil = false,
-   ESPPlayers = false,
-   ESPTools = false,
+   KillAura = false,
    AutoFarm = false,
-   KillAura = false
+   AntiKick = false
 }
 local Sliders = {
    FlySpeed = 50,
    WalkSpeed = 16,
-   MagicBulletSmooth = 0.5,
-   FarmRadius = 300,
-   FarmSpeed = 40,
    KillAuraRadius = 20,
-   ESPSize = 16
+   FarmRadius = 300,
+   FarmSpeed = 40
 }
-local FarmTargets = {"Stone", "Chest", "Tree", "Bed", "Cabinet", "Rock", "Ore"}
+local FarmTargets = {"Stone", "Chest", "Tree", "Bed", "Cabinet", "Rock", "Ore", "Sunduk", "Shkaf", "Spalnik"}
 local Connections = {}
 local ESPObjects = {}
-local Drawings = {}
 
--- ===== MAGIC BULLETS (VeryUp Style - Smooth Lock Through Walls, No Ban) =====
+-- ===== MAGIC BULLETS (VeryUp FULL - через стены, в голову, плавный) =====
 local mt = getrawmetatable(game)
 local oldNamecall = mt.__namecall
 setreadonly(mt, false)
@@ -98,33 +53,14 @@ mt.__namecall = newcclosure(function(self, ...)
          end
       end
       if closest and closest.Character.Head then
-         args[1] = closest.Character.Head.Position  -- Magic Bullet to Head
+         args[1] = closest.Character.Head.Position  -- Magic Bullet to Head (through walls)
       end
    end
    return oldNamecall(self, unpack(args))
 end)
 setreadonly(mt, true)
 
-CombatTab:CreateToggle({
-   Name = "Magic Bullets (Through Walls)",
-   CurrentValue = false,
-   Callback = function(v) Toggles.MagicBullets = v end
-})
-
-CombatTab:CreateSlider({
-   Name = "Magic Bullet Smooth (0 = Snap, 1 = Very Smooth)",
-   Range = {0, 1},
-   Increment = 0.1,
-   CurrentValue = 0.5,
-   Callback = function(v) Sliders.MagicBulletSmooth = v end
-})
-
-CombatTab:CreateToggle({
-   Name = "No Recoil",
-   CurrentValue = false,
-   Callback = function(v) Toggles.NoRecoil = v end
-})
-
+-- ===== NO RECOIL =====
 Connections.NoRecoil = RunService.Heartbeat:Connect(function()
    if Toggles.NoRecoil and LocalPlayer.Character then
       for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
@@ -136,15 +72,10 @@ end)
 -- ===== GOD MODE =====
 Connections.God = RunService.Heartbeat:Connect(function()
    if Toggles.God and LocalPlayer.Character then
-      LocalPlayer.Character.Humanoid.Health = LocalPlayer.Character.Humanoid.MaxHealth
+      local hum = LocalPlayer.Character:FindFirstChild("Humanoid")
+      if hum then hum.Health = hum.MaxHealth end
    end
 end)
-
-MovementTab:CreateToggle({
-   Name = "God Mode",
-   CurrentValue = false,
-   Callback = function(v) Toggles.God = v end
-})
 
 -- ===== NOCLIP =====
 Connections.Noclip = RunService.Stepped:Connect(function()
@@ -155,13 +86,7 @@ Connections.Noclip = RunService.Stepped:Connect(function()
    end
 end)
 
-MovementTab:CreateToggle({
-   Name = "Noclip",
-   CurrentValue = false,
-   Callback = function(v) Toggles.Noclip = v end
-})
-
--- ===== FLY (Smooth Velocity + Tween Jump) =====
+-- ===== FLY (Velocity - no back teleport) =====
 Connections.Fly = RunService.Heartbeat:Connect(function()
    if Toggles.Fly and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
       local hrp = LocalPlayer.Character.HumanoidRootPart
@@ -176,66 +101,26 @@ Connections.Fly = RunService.Heartbeat:Connect(function()
    end
 end)
 
-MovementTab:CreateToggle({
-   Name = "Fly (WASD + Space/Shift)",
-   CurrentValue = false,
-   Callback = function(v) Toggles.Fly = v end
-})
-
-MovementTab:CreateSlider({
-   Name = "Fly Speed",
-   Range = {30, 120},
-   Increment = 5,
-   CurrentValue = 50,
-   Callback = function(v) Sliders.FlySpeed = v end
-})
-
--- ===== PLAYER ESP (Highlight + Tool Name + Smooth Fade) =====
-VisualsTab:CreateToggle({
-   Name = "Player ESP",
-   CurrentValue = false,
-   Callback = function(v) Toggles.ESPPlayers = v end
-})
-
-Connections.ESP = RunService.Heartbeat:Connect(function()
-   if Toggles.ESPPlayers then
+-- ===== KILL AURA =====
+Connections.KillAura = RunService.Heartbeat:Connect(function()
+   if Toggles.KillAura and LocalPlayer.Character then
       for _, plr in pairs(Players:GetPlayers()) do
-         if plr.Character and plr ~= LocalPlayer then
-            local hl = Instance.new("Highlight")
-            hl.FillColor = Color3.new(1,0,0)
-            hl.OutlineColor = Color3.new(1,1,1)
-            hl.FillTransparency = 0.6
-            hl.OutlineTransparency = 0
-            hl.Parent = plr.Character
-
-            local text = Drawing.new("Text")
-            text.Size = 14
-            text.Outline = true
-            text.Color = Color3.new(1,1,0)
-            text.Center = true
-
-            RunService.RenderStepped:Connect(function()
-               local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
-               if hrp then
-                  local pos, vis = Camera:WorldToViewportPoint(hrp.Position + Vector3.new(0,3,0))
-                  text.Position = Vector2.new(pos.X, pos.Y)
-                  local tool = "No Tool"
-                  for _, t in pairs(plr.Character:GetChildren()) do if t:IsA("Tool") then tool = t.Name end end
-                  text.Text = plr.Name .. " [" .. tool .. "]"
-                  text.Visible = vis
-               end
-            end)
+         if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            local dist = (plr.Character.HumanoidRootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
+            if dist < Sliders.KillAuraRadius then
+               plr.Character.Humanoid.Health = 0
+            end
          end
       end
    end
 end)
 
--- ===== ГИБКИЙ AUTO FARM =====
+-- ===== ГИБКИЙ AUTO FARM (Pathfinding к ресурсам) =====
 local function FindNearestResource()
    local nearest = nil
-   local minDist = FarmSettings.Radius
+   local minDist = Sliders.FarmRadius
    for _, obj in pairs(workspace:GetDescendants()) do
-      for _, target in pairs(FarmSettings.Targets) do
+      for _, target in pairs(FarmTargets) do
          if obj.Name:lower():find(target:lower()) and obj:IsA("BasePart") then
             local dist = (obj.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
             if dist < minDist then
@@ -251,7 +136,7 @@ end
 local AutoFarmConn
 local function StartAutoFarm()
    AutoFarmConn = RunService.Heartbeat:Connect(function()
-      if not FarmSettings.Enabled then return end
+      if not Toggles.AutoFarm then return end
       local target = FindNearestResource()
       if target then
          local path = PathfindingService:CreatePath({
@@ -265,7 +150,7 @@ local function StartAutoFarm()
             local waypoints = path:GetWaypoints()
             for _, wp in pairs(waypoints) do
                LocalPlayer.Character.Humanoid:MoveTo(wp.Position)
-               LocalPlayer.Character.Humanoid.WalkSpeed = FarmSettings.Speed
+               LocalPlayer.Character.Humanoid.WalkSpeed = Sliders.FarmSpeed
                if wp.Action == Enum.PathWaypointAction.Jump then LocalPlayer.Character.Humanoid.Jump = true end
                wait(0.15)
             end
@@ -274,63 +159,24 @@ local function StartAutoFarm()
    end)
 end
 
-FarmTab:CreateToggle({
-   Name = "Гибкий Auto Farm (Pathfind)",
-   CurrentValue = false,
-   Callback = function(v)
-      FarmSettings.Enabled = v
-      if v then StartAutoFarm() end
+-- ===== HOTKEYS =====
+UserInputService.InputBegan:Connect(function(input)
+   if input.KeyCode == Enum.KeyCode.G then Toggles.God = not Toggles.God; print("God: " .. tostring(Toggles.God)) end
+   if input.KeyCode == Enum.KeyCode.N then Toggles.Noclip = not Toggles.Noclip; print("Noclip: " .. tostring(Toggles.Noclip)) end
+   if input.KeyCode == Enum.KeyCode.F then Toggles.Fly = not Toggles.Fly; print("Fly: " .. tostring(Toggles.Fly)) end
+   if input.KeyCode == Enum.KeyCode.V then Sliders.WalkSpeed = Sliders.WalkSpeed == 16 and 40 or 16; print("Speed: " .. Sliders.WalkSpeed) end
+   if input.KeyCode == Enum.KeyCode.K then Toggles.KillAura = not Toggles.KillAura; print("Kill Aura: " .. tostring(Toggles.KillAura)) end
+   if input.KeyCode == Enum.KeyCode.L then Toggles.AutoFarm = not Toggles.AutoFarm; if Toggles.AutoFarm then StartAutoFarm() end; print("Auto Farm: " .. tostring(Toggles.AutoFarm)) end
+end)
+
+-- ===== RESPAWN HOOK =====
+LocalPlayer.CharacterAdded:Connect(function()
+   wait(1)
+   if LocalPlayer.Character then
+      LocalPlayer.Character.Humanoid.WalkSpeed = Sliders.WalkSpeed
    end
-})
+end)
 
-FarmTab:CreateSlider({
-   Name = "Farm Radius",
-   Range = {200, 1000},
-   Increment = 50,
-   CurrentValue = 300,
-   Callback = function(v) FarmSettings.Radius = v end
-})
-
-FarmTab:CreateSlider({
-   Name = "Farm Speed",
-   Range = {20, 80},
-   Increment = 5,
-   CurrentValue = 40,
-   Callback = function(v) FarmSettings.Speed = v end
-})
-
-FarmTab:CreateButton({
-   Name = "Add Target (e.g. Bed)",
-   Callback = function()
-      table.insert(FarmSettings.Targets, "Bed")
-      Rayfield:Notify({Title = "Added", Content = "Bed added to targets", Duration = 3})
-   end
-})
-
--- ===== SETTINGS =====
-SettingsTab:CreateToggle({
-   Name = "Dark Theme (Default)",
-   CurrentValue = true,
-   Callback = function(v)
-      if v then
-         Rayfield:SetTheme("Dark")
-      else
-         Rayfield:SetTheme("Light")
-      end
-   end
-})
-
--- ===== RESPAWN =====
-MiscTab:CreateButton({
-   Name = "Respawn",
-   Callback = function() LocalPlayer.Character:BreakJoints() end
-})
-
-Rayfield:Notify({
-   Title = "v2026 Loaded!",
-   Content = "Magic Bullets + Auto Farm + Smooth Animations Ready! Respawn twice.",
-   Duration = 8,
-   Image = 4483362458
-})
-
-print("Rost Alpha ApexHub v2026 | Magic Bullets + Auto Farm Ready!")
+print("Rost Alpha ApexHub v2026 Loaded!")
+print("G = God | N = Noclip | F = Fly | V = Speed | K = Kill Aura | L = Auto Farm")
+print("RESPAWN ДО execute и ПОСЛЕ execute!")
