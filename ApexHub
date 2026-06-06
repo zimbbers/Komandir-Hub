@@ -1,710 +1,387 @@
 -- ============================================================
--- APEX HUB - Blox Strike Premium Penetration Suite
--- Open with: Right Shift (RightShift)
--- ТОЛЬКО ДЛЯ АВТОРИЗОВАННОГО ТЕСТИРОВАНИЯ
+-- APEX HUB v2.0 - Blox Strike Suite
+-- Open: Right Shift | Krnl/Xeno ready
 -- ============================================================
 
--- Проверка на инжектор
-if not (syn and syn.request) and not (http_request or request) then
-    warn("[ApexHub] Limited functionality: no HTTP support")
-end
-
--- ============================================
--- СОБСТВЕННОЕ GUI (без внешних библиотек)
--- ============================================
-local ApexHub = {}
-ApexHub.Flags = {}
-ApexHub.Theme = {
-    Background = Color3.fromRGB(25, 25, 35),
-    Topbar = Color3.fromRGB(35, 35, 50),
-    Accent = Color3.fromRGB(0, 170, 255),
-    Text = Color3.fromRGB(220, 220, 220),
-    SubText = Color3.fromRGB(150, 150, 170),
-    Button = Color3.fromRGB(45, 45, 65),
-    ButtonHover = Color3.fromRGB(55, 55, 80),
-    ToggleOn = Color3.fromRGB(0, 200, 100),
-    ToggleOff = Color3.fromRGB(60, 60, 80),
-    Red = Color3.fromRGB(255, 60, 60),
-    Gold = Color3.fromRGB(255, 200, 50)
-}
-
--- Создание главного GUI
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "ApexHub"
-ScreenGui.ResetOnSpawn = false
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-
--- Main Frame
-local MainFrame = Instance.new("Frame")
-MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 650, 0, 450)
-MainFrame.Position = UDim2.new(0.5, -325, 0.5, -225)
-MainFrame.BackgroundColor3 = ApexHub.Theme.Background
-MainFrame.BorderSizePixel = 0
-MainFrame.Active = true
-MainFrame.Draggable = true
-MainFrame.Visible = false
-
--- Topbar
-local Topbar = Instance.new("Frame")
-Topbar.Name = "Topbar"
-Topbar.Size = UDim2.new(1, 0, 0, 35)
-Topbar.BackgroundColor3 = ApexHub.Theme.Topbar
-Topbar.BorderSizePixel = 0
-Topbar.Parent = MainFrame
-
-local UICorner = Instance.new("UICorner")
-UICorner.CornerRadius = UDim.new(0, 6)
-UICorner.Parent = MainFrame
-
-local TopbarCorner = Instance.new("UICorner")
-TopbarCorner.CornerRadius = UDim.new(0, 6)
-TopbarCorner.Parent = Topbar
-
-local Title = Instance.new("TextLabel")
-Title.Name = "Title"
-Title.Size = UDim2.new(1, -40, 1, 0)
-Title.BackgroundTransparency = 1
-Title.Text = "APEX HUB  |  Blox Strike"
-Title.TextColor3 = ApexHub.Theme.Accent
-Title.TextSize = 16
-Title.TextFont = Enum.Font.GothamBold
-Title.Font = Enum.Font.GothamBold
-Title.TextXAlignment = Enum.TextXAlignment.Left
-Title.Position = UDim2.new(0, 12, 0, 0)
-Title.Parent = Topbar
-
-local CloseBtn = Instance.new("TextButton")
-CloseBtn.Name = "CloseBtn"
-CloseBtn.Size = UDim2.new(0, 28, 0, 28)
-CloseBtn.Position = UDim2.new(1, -34, 0, 3)
-CloseBtn.BackgroundColor3 = ApexHub.Theme.Red
-CloseBtn.Text = "X"
-CloseBtn.TextColor3 = Color3.new(1, 1, 1)
-CloseBtn.TextSize = 14
-CloseBtn.TextFont = Enum.Font.GothamBold
-CloseBtn.Font = Enum.Font.GothamBold
-CloseBtn.AutoButtonColor = false
-
-local CloseBtnCorner = Instance.new("UICorner")
-CloseBtnCorner.CornerRadius = UDim.new(0, 4)
-CloseBtnCorner.Parent = CloseBtn
-
-CloseBtn.MouseButton1Click:Connect(function()
-    MainFrame.Visible = false
-end)
-CloseBtn.Parent = Topbar
-
--- Tabs container
-local TabContainer = Instance.new("Frame")
-TabContainer.Name = "TabContainer"
-TabContainer.Size = UDim2.new(0, 140, 1, -45)
-TabContainer.Position = UDim2.new(0, 0, 0, 45)
-TabContainer.BackgroundColor3 = ApexHub.Theme.Topbar
-TabContainer.BorderSizePixel = 0
-TabContainer.Parent = MainFrame
-
--- Content container
-local ContentContainer = Instance.new("Frame")
-ContentContainer.Name = "ContentContainer"
-ContentContainer.Size = UDim2.new(1, -145, 1, -50)
-ContentContainer.Position = UDim2.new(0, 145, 0, 45)
-ContentContainer.BackgroundColor3 = ApexHub.Theme.Background
-ContentContainer.BorderSizePixel = 0
-ContentContainer.Parent = MainFrame
-
--- ScrollingFrame for content
-local ContentFrame = Instance.new("ScrollingFrame")
-ContentFrame.Name = "ContentFrame"
-ContentFrame.Size = UDim2.new(1, -10, 1, -10)
-ContentFrame.Position = UDim2.new(0, 5, 0, 5)
-ContentFrame.BackgroundTransparency = 1
-ContentFrame.BorderSizePixel = 0
-ContentFrame.ScrollBarThickness = 4
-ContentFrame.ScrollBarImageColor3 = ApexHub.Theme.Accent
-ContentFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-ContentFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
-ContentFrame.Parent = ContentContainer
-
--- Watermark
-local Watermark = Instance.new("TextLabel")
-Watermark.Name = "Watermark"
-Watermark.Size = UDim2.new(0, 200, 0, 24)
-Watermark.Position = UDim2.new(0, 10, 1, -34)
-Watermark.BackgroundColor3 = ApexHub.Theme.Topbar
-Watermark.BackgroundTransparency = 0.3
-Watermark.Text = "APEX HUB v2.0 [AUTHORIZED]"
-Watermark.TextColor3 = ApexHub.Theme.Accent
-Watermark.TextSize = 12
-Watermark.TextFont = Enum.Font.GothamBold
-Watermark.Font = Enum.Font.GothamBold
-
-local WM_Corner = Instance.new("UICorner")
-WM_Corner.CornerRadius = UDim.new(0, 4)
-WM_Corner.Parent = Watermark
-Watermark.Parent = MainFrame
-
--- ============================================
--- TAB SYSTEM
--- ============================================
-local Tabs = {}
-local ActiveTab = nil
-
-function ApexHub:CreateTab(Name, Icon)
-    local TabButton = Instance.new("TextButton")
-    TabButton.Name = "Tab_" .. Name
-    TabButton.Size = UDim2.new(1, 0, 0, 34)
-    TabButton.Position = UDim2.new(0, 0, 0, (#Tabs) * 36 + 6)
-    TabButton.BackgroundColor3 = ApexHub.Theme.Topbar
-    TabButton.BackgroundTransparency = 1
-    TabButton.Text = "  " .. (Icon or "■") .. "  " .. Name
-    TabButton.TextColor3 = ApexHub.Theme.SubText
-    TabButton.TextSize = 13
-    TabButton.TextFont = Enum.Font.Gotham
-    TabButton.Font = Enum.Font.Gotham
-    TabButton.TextXAlignment = Enum.TextXAlignment.Left
-    TabButton.AutoButtonColor = false
-    TabButton.Parent = TabContainer
-    
-    local TabContent = Instance.new("Frame")
-    TabContent.Name = "Content_" .. Name
-    TabContent.Size = UDim2.new(1, 0, 0, 0)
-    TabContent.BackgroundTransparency = 1
-    TabContent.Visible = false
-    TabContent.Parent = ContentFrame
-    
-    -- UIListLayout для сортировки
-    local Layout = Instance.new("UIListLayout")
-    Layout.Padding = UDim.new(0, 4)
-    Layout.SortOrder = Enum.SortOrder.LayoutOrder
-    Layout.Parent = TabContent
-    
-    local Padding = Instance.new("UIPadding")
-    Padding.PaddingLeft = UDim.new(0, 4)
-    Padding.PaddingRight = UDim.new(0, 4)
-    Padding.PaddingTop = UDim.new(0, 4)
-    Padding.Parent = TabContent
-    
-    table.insert(Tabs, { Button = TabButton, Content = TabContent, Name = Name })
-    
-    TabButton.MouseButton1Click:Connect(function()
-        for _, t in pairs(Tabs) do
-            t.Content.Visible = false
-            t.Button.BackgroundTransparency = 1
-            t.Button.TextColor3 = ApexHub.Theme.SubText
-        end
-        TabContent.Visible = true
-        TabButton.BackgroundTransparency = 0.8
-        TabButton.BackgroundColor3 = ApexHub.Theme.Accent
-        TabButton.TextColor3 = ApexHub.Theme.Text
-        ActiveTab = TabContent
-    end)
-    
-    -- Активируем первую вкладку
-    if #Tabs == 1 then
-        TabContent.Visible = true
-        TabButton.BackgroundTransparency = 0.8
-        TabButton.BackgroundColor3 = ApexHub.Theme.Accent
-        TabButton.TextColor3 = ApexHub.Theme.Text
-        ActiveTab = TabContent
-    end
-    
-    return TabContent
-end
-
--- ============================================
--- GUI CONTROL ELEMENTS
--- ============================================
-
--- Toggle
-function ApexHub:Toggle(Parent, Name, Default, Callback)
-    local Flag = "Toggle_" .. Name
-    ApexHub.Flags[Flag] = Default or false
-    
-    local Frame = Instance.new("Frame")
-    Frame.Size = UDim2.new(1, -8, 0, 32)
-    Frame.BackgroundColor3 = ApexHub.Theme.Button
-    Frame.BackgroundTransparency = 0.3
-    
-    local F_Corner = Instance.new("UICorner")
-    F_Corner.CornerRadius = UDim.new(0, 4)
-    F_Corner.Parent = Frame
-    
-    local Label = Instance.new("TextLabel")
-    Label.Size = UDim2.new(1, -50, 1, 0)
-    Label.Position = UDim2.new(0, 10, 0, 0)
-    Label.BackgroundTransparency = 1
-    Label.Text = Name
-    Label.TextColor3 = ApexHub.Theme.Text
-    Label.TextSize = 13
-    Label.TextXAlignment = Enum.TextXAlignment.Left
-    Label.Font = Enum.Font.Gotham
-    Label.Parent = Frame
-    
-    local ToggleBtn = Instance.new("TextButton")
-    ToggleBtn.Size = UDim2.new(0, 38, 0, 22)
-    ToggleBtn.Position = UDim2.new(1, -46, 0, 5)
-    ToggleBtn.BackgroundColor3 = Default and ApexHub.Theme.ToggleOn or ApexHub.Theme.ToggleOff
-    ToggleBtn.Text = ""
-    ToggleBtn.AutoButtonColor = false
-    
-    local T_Corner = Instance.new("UICorner")
-    T_Corner.CornerRadius = UDim.new(0, 11)
-    T_Corner.Parent = ToggleBtn
-    
-    local ToggleCircle = Instance.new("Frame")
-    ToggleCircle.Size = UDim2.new(0, 16, 0, 16)
-    ToggleCircle.Position = Default and UDim2.new(1, -20, 0, 3) or UDim2.new(0, 3, 0, 3)
-    ToggleCircle.BackgroundColor3 = Color3.new(1, 1, 1)
-    
-    local TC_Corner = Instance.new("UICorner")
-    TC_Corner.CornerRadius = UDim.new(0, 8)
-    TC_Corner.Parent = ToggleCircle
-    ToggleCircle.Parent = ToggleBtn
-    
-    ToggleBtn.MouseButton1Click:Connect(function()
-        ApexHub.Flags[Flag] = not ApexHub.Flags[Flag]
-        ToggleBtn.BackgroundColor3 = ApexHub.Flags[Flag] and ApexHub.Theme.ToggleOn or ApexHub.Theme.ToggleOff
-        ToggleCircle:TweenPosition(
-            ApexHub.Flags[Flag] and UDim2.new(1, -20, 0, 3) or UDim2.new(0, 3, 0, 3),
-            Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.15, true
-        )
-        pcall(Callback, ApexHub.Flags[Flag])
-    end)
-    
-    ToggleBtn.Parent = Frame
-    Frame.Parent = Parent
-    
-    return Frame
-end
-
--- Slider
-function ApexHub:Slider(Parent, Name, Min, Max, Default, Callback, Suffix)
-    Suffix = Suffix or ""
-    local Flag = "Slider_" .. Name
-    ApexHub.Flags[Flag] = Default or Min
-    
-    local Frame = Instance.new("Frame")
-    Frame.Size = UDim2.new(1, -8, 0, 44)
-    Frame.BackgroundColor3 = ApexHub.Theme.Button
-    Frame.BackgroundTransparency = 0.3
-    
-    local F_Corner = Instance.new("UICorner")
-    F_Corner.CornerRadius = UDim.new(0, 4)
-    F_Corner.Parent = Frame
-    
-    local Label = Instance.new("TextLabel")
-    Label.Size = UDim2.new(0.7, -10, 0, 20)
-    Label.Position = UDim2.new(0, 10, 0, 4)
-    Label.BackgroundTransparency = 1
-    Label.Text = Name
-    Label.TextColor3 = ApexHub.Theme.Text
-    Label.TextSize = 13
-    Label.TextXAlignment = Enum.TextXAlignment.Left
-    Label.Font = Enum.Font.Gotham
-    Label.Parent = Frame
-    
-    local ValueLabel = Instance.new("TextLabel")
-    ValueLabel.Size = UDim2.new(0.3, -10, 0, 20)
-    ValueLabel.Position = UDim2.new(0.7, 0, 0, 4)
-    ValueLabel.BackgroundTransparency = 1
-    ValueLabel.Text = tostring(Default) .. Suffix
-    ValueLabel.TextColor3 = ApexHub.Theme.Accent
-    ValueLabel.TextSize = 13
-    ValueLabel.TextXAlignment = Enum.TextXAlignment.Right
-    ValueLabel.Font = Enum.Font.GothamBold
-    ValueLabel.Parent = Frame
-    
-    local SliderBg = Instance.new("Frame")
-    SliderBg.Size = UDim2.new(1, -20, 0, 6)
-    SliderBg.Position = UDim2.new(0, 10, 0, 30)
-    SliderBg.BackgroundColor3 = ApexHub.Theme.ToggleOff
-    SliderBg.BackgroundTransparency = 0.4
-    
-    local SBG_Corner = Instance.new("UICorner")
-    SBG_Corner.CornerRadius = UDim.new(0, 3)
-    SBG_Corner.Parent = SliderBg
-    
-    local SliderFill = Instance.new("Frame")
-    local pct = (Default - Min) / (Max - Min)
-    SliderFill.Size = UDim2.new(pct, 0, 1, 0)
-    SliderFill.BackgroundColor3 = ApexHub.Theme.Accent
-    
-    local SF_Corner = Instance.new("UICorner")
-    SF_Corner.CornerRadius = UDim.new(0, 3)
-    SF_Corner.Parent = SliderFill
-    SliderFill.Parent = SliderBg
-    
-    local SliderBtn = Instance.new("TextButton")
-    SliderBtn.Size = UDim2.new(1, 0, 1, 0)
-    SliderBtn.BackgroundTransparency = 1
-    SliderBtn.Text = ""
-    SliderBtn.AutoButtonColor = false
-    SliderBtn.Parent = SliderBg
-    
-    local Dragging = false
-    SliderBtn.MouseButton1Down:Connect(function()
-        Dragging = true
-    end)
-    
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            Dragging = false
-        end
-    end)
-    
-    SliderBtn.MouseButton1Down:Connect(function()
-        local MousePos = UserInputService:GetMouseLocation()
-        local AbsPos = SliderBg.AbsolutePosition
-        local AbsSize = SliderBg.AbsoluteSize.X
-        local RelX = math.clamp(MousePos.X - AbsPos.X, 0, AbsSize)
-        local NewPct = RelX / AbsSize
-        local NewVal = math.floor(Min + (Max - Min) * NewPct + 0.5)
-        NewVal = math.clamp(NewVal, Min, Max)
-        
-        ApexHub.Flags[Flag] = NewVal
-        SliderFill.Size = UDim2.new(NewPct, 0, 1, 0)
-        ValueLabel.Text = tostring(NewVal) .. Suffix
-        pcal(Callback, NewVal)
-    end)
-    
-    -- Drag update
-    game:GetService("RunService").RenderStepped:Connect(function()
-        if Dragging then
-            local MousePos = UserInputService:GetMouseLocation()
-            local AbsPos = SliderBg.AbsolutePosition
-            local AbsSize = SliderBg.AbsoluteSize.X
-            if AbsSize <= 0 then return end
-            local RelX = math.clamp(MousePos.X - AbsPos.X, 0, AbsSize)
-            local NewPct = RelX / AbsSize
-            local NewVal = math.floor(Min + (Max - Min) * NewPct + 0.5)
-            NewVal = math.clamp(NewVal, Min, Max)
-            
-            ApexHub.Flags[Flag] = NewVal
-            SliderFill.Size = UDim2.new(NewPct, 0, 1, 0)
-            ValueLabel.Text = tostring(NewVal) .. Suffix
-            pcall(Callback, NewVal)
-        end
-    end)
-    
-    SliderBg.Parent = Frame
-    Frame.Parent = Parent
-    
-    return Frame
-end
-
--- Dropdown
-function ApexHub:Dropdown(Parent, Name, Options, Default, Callback)
-    local Flag = "Dropdown_" .. Name
-    ApexHub.Flags[Flag] = Default or Options[1]
-    
-    local Frame = Instance.new("Frame")
-    Frame.Size = UDim2.new(1, -8, 0, 34)
-    Frame.BackgroundColor3 = ApexHub.Theme.Button
-    Frame.BackgroundTransparency = 0.3
-    
-    local F_Corner = Instance.new("UICorner")
-    F_Corner.CornerRadius = UDim.new(0, 4)
-    F_Corner.Parent = Frame
-    
-    local Label = Instance.new("TextLabel")
-    Label.Size = UDim2.new(0.5, -10, 1, 0)
-    Label.Position = UDim2.new(0, 10, 0, 0)
-    Label.BackgroundTransparency = 1
-    Label.Text = Name
-    Label.TextColor3 = ApexHub.Theme.Text
-    Label.TextSize = 13
-    Label.TextXAlignment = Enum.TextXAlignment.Left
-    Label.Font = Enum.Font.Gotham
-    Label.Parent = Frame
-    
-    local DropBtn = Instance.new("TextButton")
-    DropBtn.Size = UDim2.new(0.5, -10, 0, 26)
-    DropBtn.Position = UDim2.new(0.5, 0, 0, 4)
-    DropBtn.BackgroundColor3 = ApexHub.Theme.Topbar
-    DropBtn.Text = tostring(ApexHub.Flags[Flag])
-    DropBtn.TextColor3 = ApexHub.Theme.Text
-    DropBtn.TextSize = 13
-    DropBtn.Font = Enum.Font.Gotham
-    DropBtn.TextTruncate = Enum.TextTruncate.AtEnd
-    DropBtn.AutoButtonColor = false
-    
-    local DB_Corner = Instance.new("UICorner")
-    DB_Corner.CornerRadius = UDim.new(0, 4)
-    DB_Corner.Parent = DropBtn
-    
-    -- Dropdown list
-    local DropList = Instance.new("Frame")
-    DropList.Size = UDim2.new(0.5, -10, 0, #Options * 26 + 4)
-    DropList.Position = UDim2.new(0.5, 0, 0, 30)
-    DropList.BackgroundColor3 = ApexHub.Theme.Topbar
-    DropList.BackgroundTransparency = 0.1
-    DropList.Visible = false
-    DropList.ZIndex = 10
-    
-    local DL_Corner = Instance.new("UICorner")
-    DL_Corner.CornerRadius = UDim.new(0, 4)
-    DL_Corner.Parent = DropList
-    
-    local DropLayout = Instance.new("UIListLayout")
-    DropLayout.Padding = UDim.new(0, 2)
-    DropLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    DropLayout.Parent = DropList
-    
-    for _, opt in pairs(Options) do
-        local OptBtn = Instance.new("TextButton")
-        OptBtn.Size = UDim2.new(1, -8, 0, 24)
-        OptBtn.Position = UDim2.new(0, 4, 0, 2)
-        OptBtn.BackgroundTransparency = 0.8
-        OptBtn.Text = opt
-        OptBtn.TextColor3 = ApexHub.Theme.Text
-        OptBtn.TextSize = 12
-        OptBtn.Font = Enum.Font.Gotham
-        OptBtn.AutoButtonColor = false
-        OptBtn.ZIndex = 11
-        
-        OptBtn.MouseButton1Click:Connect(function()
-            ApexHub.Flags[Flag] = opt
-            DropBtn.Text = opt
-            DropList.Visible = false
-            pcall(Callback, opt)
-        end)
-        
-        local O_Corner = Instance.new("UICorner")
-        O_Corner.CornerRadius = UDim.new(0, 3)
-        O_Corner.Parent = OptBtn
-        OptBtn.Parent = DropList
-    end
-    
-    DropBtn.MouseButton1Click:Connect(function()
-        DropList.Visible = not DropList.Visible
-    end)
-    
-    -- Закрытие при клике вне
-    UserInputService.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            task.wait()
-            if DropList.Visible then
-                local mPos = UserInputService:GetMouseLocation()
-                local absPos = DropList.AbsolutePosition
-                local absSize = DropList.AbsoluteSize
-                if mPos.X < absPos.X or mPos.X > absPos.X + absSize.X or
-                   mPos.Y < absPos.Y or mPos.Y > absPos.Y + absSize.Y then
-                    DropList.Visible = false
-                end
-            end
-        end
-    end)
-    
-    DropBtn.Parent = Frame
-    DropList.Parent = Frame
-    Frame.Parent = Parent
-    
-    return Frame
-end
-
--- Button
-function ApexHub:Button(Parent, Name, Callback)
-    local Frame = Instance.new("TextButton")
-    Frame.Size = UDim2.new(1, -8, 0, 34)
-    Frame.BackgroundColor3 = ApexHub.Theme.Button
-    Frame.Text = "  " .. Name
-    Frame.TextColor3 = ApexHub.Theme.Text
-    Frame.TextSize = 13
-    Frame.TextXAlignment = Enum.TextXAlignment.Left
-    Frame.Font = Enum.Font.Gotham
-    Frame.AutoButtonColor = false
-    
-    local F_Corner = Instance.new("UICorner")
-    F_Corner.CornerRadius = UDim.new(0, 4)
-    F_Corner.Parent = Frame
-    
-    Frame.MouseButton1Click:Connect(function()
-        Frame.BackgroundColor3 = ApexHub.Theme.Accent
-        task.wait(0.1)
-        Frame.BackgroundColor3 = ApexHub.Theme.Button
-        pcall(Callback)
-    end)
-    
-    Frame.Parent = Parent
-    return Frame
-end
-
--- Label (секция)
-function ApexHub:Label(Parent, Name)
-    local Label = Instance.new("TextLabel")
-    Label.Size = UDim2.new(1, -8, 0, 22)
-    Label.BackgroundTransparency = 1
-    Label.Text = Name
-    Label.TextColor3 = ApexHub.Theme.Accent
-    Label.TextSize = 14
-    Label.TextXAlignment = Enum.TextXAlignment.Left
-    Label.Font = Enum.Font.GothamBold
-    Label.Parent = Parent
-    return Label
-end
-
--- ============================================
--- СОЗДАНИЕ ВКЛАДОК
--- ============================================
-local T_Aim = ApexHub:CreateTab("Aim", "🎯")
-local T_Visuals = ApexHub:CreateTab("Visuals", "👁")
-local T_Misc = ApexHub:CreateTab("Misc", "⚙")
-local T_Exploits = ApexHub:CreateTab("Exploits", "💻")
-local T_Skins = ApexHub:CreateTab("Skins", "🎨")
-
--- ============================================
--- СЕРВИСЫ
--- ============================================
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
+local RunSvc = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
 local Camera = workspace.CurrentCamera
-local LocalPlayer = Players.LocalPlayer
-local Mouse = LocalPlayer:GetMouse()
+local LP = Players.LocalPlayer
+local Mouse = LP:GetMouse()
 
 -- ============================================
--- КОНФИГ
+-- GUI
 -- ============================================
-local C = {
-    Aim = { FOV = 120, Smooth = 0.3, Part = "Head", TeamCheck = true },
-    Silent = { Enabled = false, Part = "Head" },
-    Trigger = { Enabled = false, Dist = 200, Rate = 0.15 },
-    ESP = { Box = false, Health = false, Name = false, Tracer = false, TeamCheck = true },
-    Anti = { Enabled = false, Pitch = -89, Yaw = 180 },
-    Misc = { FOV = 90, FOVEnabled = false }
-}
+local Gui = Instance.new("ScreenGui")
+Gui.Name = "ApexHub"
+Gui.ResetOnSpawn = false
 
--- ============================================
--- ПОИСК БЛИЖАЙШЕГО
--- ============================================
-local function GetClosest()
-    local Closest, Shortest = nil, C.Aim.FOV
+local Main = Instance.new("Frame")
+Main.Size = UDim2.new(0, 700, 0, 500)
+Main.Position = UDim2.new(0.5, -350, 0.5, -250)
+Main.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+Main.Active = true
+Main.Draggable = true
+Main.Visible = false
+
+local Title = Instance.new("TextLabel", Main)
+Title.Size = UDim2.new(1, 0, 0, 35)
+Title.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
+Title.Text = "  APEX HUB v2.0  |  Blox Strike"
+Title.TextColor3 = Color3.fromRGB(0, 170, 255)
+Title.TextSize = 16
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Font = Enum.Font.GothamBold
+
+local Close = Instance.new("TextButton", Title)
+Close.Size = UDim2.new(0, 28, 0, 28)
+Close.Position = UDim2.new(1, -34, 0, 3)
+Close.BackgroundColor3 = Color3.fromRGB(200, 40, 40)
+Close.Text = "X"
+Close.TextColor3 = Color3.new(1,1,1)
+Close.MouseButton1Click:Connect(function() Main.Visible = false end)
+
+local TabContainer = Instance.new("Frame", Main)
+TabContainer.Size = UDim2.new(0, 150, 1, -45)
+TabContainer.Position = UDim2.new(0, 0, 0, 45)
+TabContainer.BackgroundColor3 = Color3.fromRGB(25, 25, 38)
+
+local ContentArea = Instance.new("ScrollingFrame", Main)
+ContentArea.Size = UDim2.new(1, -160, 1, -55)
+ContentArea.Position = UDim2.new(0, 155, 0, 45)
+ContentArea.BackgroundTransparency = 1
+ContentArea.ScrollBarThickness = 4
+ContentArea.AutomaticCanvasSize = Enum.AutomaticSize.Y
+ContentArea.CanvasSize = UDim2.new(0, 0, 0, 0)
+
+local Tabs = {}
+local function AddTab(name)
+    local btn = Instance.new("TextButton", TabContainer)
+    btn.Size = UDim2.new(1, -6, 0, 32)
+    btn.Position = UDim2.new(0, 3, 0, 4 + (#Tabs) * 36)
+    btn.BackgroundTransparency = 1
+    btn.Text = "  " .. name
+    btn.TextColor3 = Color3.fromRGB(150,150,170)
+    btn.TextSize = 13
+    btn.TextXAlignment = Enum.TextXAlignment.Left
+    btn.Font = Enum.Font.Gotham
+    
+    local content = Instance.new("Frame", ContentArea)
+    content.Size = UDim2.new(1, -6, 0, 0)
+    content.Position = UDim2.new(0, 3, 0, 0)
+    content.BackgroundTransparency = 1
+    content.Visible = false
+    local lay = Instance.new("UIListLayout", content)
+    lay.Padding = UDim.new(0, 4)
+    lay.SortOrder = Enum.SortOrder.LayoutOrder
+    Instance.new("UIPadding", content).PaddingLeft = UDim.new(0, 4)
+    
+    btn.MouseButton1Click:Connect(function()
+        for _, t in pairs(Tabs) do t.btn.BackgroundTransparency = 1; t.btn.TextColor3 = Color3.fromRGB(150,150,170); t.content.Visible = false end
+        btn.BackgroundTransparency = 0.85; btn.BackgroundColor3 = Color3.fromRGB(0,170,255); btn.TextColor3 = Color3.new(1,1,1)
+        content.Visible = true
+    end)
+    
+    table.insert(Tabs, {btn = btn, content = content})
+    if #Tabs == 1 then btn.BackgroundTransparency = 0.85; btn.BackgroundColor3 = Color3.fromRGB(0,170,255); btn.TextColor3 = Color3.new(1,1,1); content.Visible = true end
+    return content
+end
+
+-- Helpers
+local function Toggle(parent, name, def, cb)
+    local f = Instance.new("Frame", parent)
+    f.Size = UDim2.new(1, -4, 0, 32)
+    f.BackgroundColor3 = Color3.fromRGB(40,40,55)
+    f.BackgroundTransparency = 0.3
+    Instance.new("UICorner", f).CornerRadius = UDim.new(0,4)
+    
+    local lbl = Instance.new("TextLabel", f)
+    lbl.Size = UDim2.new(1, -50, 1, 0)
+    lbl.Position = UDim2.new(0, 8, 0, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = name
+    lbl.TextColor3 = Color3.fromRGB(220,220,220)
+    lbl.TextSize = 13
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Font = Enum.Font.Gotham
+    
+    local btn = Instance.new("TextButton", f)
+    btn.Size = UDim2.new(0, 38, 0, 22)
+    btn.Position = UDim2.new(1, -46, 0, 5)
+    btn.BackgroundColor3 = def and Color3.fromRGB(0,200,100) or Color3.fromRGB(60,60,80)
+    btn.Text = ""
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,11)
+    
+    local dot = Instance.new("Frame", btn)
+    dot.Size = UDim2.new(0, 16, 0, 16)
+    dot.Position = def and UDim2.new(1, -20, 0, 3) or UDim2.new(0, 3, 0, 3)
+    dot.BackgroundColor3 = Color3.new(1,1,1)
+    Instance.new("UICorner", dot).CornerRadius = UDim.new(0,8)
+    
+    local state = def
+    btn.MouseButton1Click:Connect(function()
+        state = not state
+        btn.BackgroundColor3 = state and Color3.fromRGB(0,200,100) or Color3.fromRGB(60,60,80)
+        dot:TweenPosition(state and UDim2.new(1, -20, 0, 3) or UDim2.new(0, 3, 0, 3), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.15, true)
+        pcall(cb, state)
+    end)
+    return f
+end
+
+local function Slider(parent, name, min, max, def, cb, suffix)
+    suffix = suffix or ""
+    local f = Instance.new("Frame", parent)
+    f.Size = UDim2.new(1, -4, 0, 44)
+    f.BackgroundColor3 = Color3.fromRGB(40,40,55)
+    f.BackgroundTransparency = 0.3
+    Instance.new("UICorner", f).CornerRadius = UDim.new(0,4)
+    
+    local lbl = Instance.new("TextLabel", f)
+    lbl.Size = UDim2.new(0.7, -6, 0, 20)
+    lbl.Position = UDim2.new(0, 8, 0, 3)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = name
+    lbl.TextColor3 = Color3.fromRGB(220,220,220)
+    lbl.TextSize = 13
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Font = Enum.Font.Gotham
+    
+    local val = Instance.new("TextLabel", f)
+    val.Size = UDim2.new(0.3, -6, 0, 20)
+    val.Position = UDim2.new(0.7, 0, 0, 3)
+    val.BackgroundTransparency = 1
+    val.Text = tostring(def) .. suffix
+    val.TextColor3 = Color3.fromRGB(0,170,255)
+    val.TextSize = 13
+    val.TextXAlignment = Enum.TextXAlignment.Right
+    val.Font = Enum.Font.GothamBold
+    
+    local bg = Instance.new("Frame", f)
+    bg.Size = UDim2.new(1, -16, 0, 6)
+    bg.Position = UDim2.new(0, 8, 0, 30)
+    bg.BackgroundColor3 = Color3.fromRGB(60,60,80)
+    Instance.new("UICorner", bg).CornerRadius = UDim.new(0,3)
+    
+    local fill = Instance.new("Frame", bg)
+    local pct = (def - min) / (max - min)
+    fill.Size = UDim2.new(pct, 0, 1, 0)
+    fill.BackgroundColor3 = Color3.fromRGB(0,170,255)
+    Instance.new("UICorner", fill).CornerRadius = UDim.new(0,3)
+    
+    local hit = Instance.new("TextButton", bg)
+    hit.Size = UDim2.new(1, 0, 1, 0)
+    hit.BackgroundTransparency = 1
+    hit.Text = ""
+    
+    local dragging = false
+    local cval = def
+    hit.MouseButton1Down:Connect(function()
+        dragging = true
+        local mx = UIS:GetMouseLocation().X
+        local ax = bg.AbsolutePosition.X
+        local aw = bg.AbsoluteSize.X
+        if aw <= 0 then return end
+        local rx = math.clamp(mx - ax, 0, aw)
+        local np = rx / aw
+        cval = math.floor(min + (max - min) * np + 0.5)
+        cval = math.clamp(cval, min, max)
+        fill.Size = UDim2.new(np, 0, 1, 0)
+        val.Text = tostring(cval) .. suffix
+        pcall(cb, cval)
+    end)
+    
+    UIS.InputEnded:Connect(function(inp)
+        if inp.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+    end)
+    
+    RunSvc.RenderStepped:Connect(function()
+        if dragging then
+            local mx = UIS:GetMouseLocation().X
+            local ax = bg.AbsolutePosition.X
+            local aw = bg.AbsoluteSize.X
+            if aw <= 0 then return end
+            local rx = math.clamp(mx - ax, 0, aw)
+            local np = rx / aw
+            cval = math.floor(min + (max - min) * np + 0.5)
+            cval = math.clamp(cval, min, max)
+            fill.Size = UDim2.new(np, 0, 1, 0)
+            val.Text = tostring(cval) .. suffix
+            pcall(cb, cval)
+        end
+    end)
+    return f
+end
+
+local function Dropdown(parent, name, options, def, cb)
+    local f = Instance.new("Frame", parent)
+    f.Size = UDim2.new(1, -4, 0, 34)
+    f.BackgroundColor3 = Color3.fromRGB(40,40,55)
+    f.BackgroundTransparency = 0.3
+    Instance.new("UICorner", f).CornerRadius = UDim.new(0,4)
+    
+    local lbl = Instance.new("TextLabel", f)
+    lbl.Size = UDim2.new(0.5, -6, 1, 0)
+    lbl.Position = UDim2.new(0, 8, 0, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = name
+    lbl.TextColor3 = Color3.fromRGB(220,220,220)
+    lbl.TextSize = 13
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Font = Enum.Font.Gotham
+    
+    local cur = def or options[1]
+    local btn = Instance.new("TextButton", f)
+    btn.Size = UDim2.new(0.5, -4, 0, 26)
+    btn.Position = UDim2.new(0.5, 0, 0, 4)
+    btn.BackgroundColor3 = Color3.fromRGB(30,30,45)
+    btn.Text = cur
+    btn.TextColor3 = Color3.fromRGB(220,220,220)
+    btn.TextSize = 13
+    btn.Font = Enum.Font.Gotham
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,4)
+    
+    local list = Instance.new("Frame", f)
+    list.Size = UDim2.new(0.5, -4, 0, #options * 26 + 4)
+    list.Position = UDim2.new(0.5, 0, 0, 30)
+    list.BackgroundColor3 = Color3.fromRGB(30,30,45)
+    list.Visible = false
+    list.ZIndex = 10
+    Instance.new("UICorner", list).CornerRadius = UDim.new(0,4)
+    local ll = Instance.new("UIListLayout", list)
+    ll.Padding = UDim.new(0, 2)
+    
+    for _, opt in pairs(options) do
+        local ob = Instance.new("TextButton", list)
+        ob.Size = UDim2.new(1, -8, 0, 24)
+        ob.Position = UDim2.new(0, 4, 0, 2)
+        ob.BackgroundTransparency = 0.8
+        ob.Text = opt
+        ob.TextColor3 = Color3.fromRGB(220,220,220)
+        ob.TextSize = 12
+        ob.Font = Enum.Font.Gotham
+        ob.ZIndex = 11
+        ob.MouseButton1Click:Connect(function()
+            cur = opt; btn.Text = opt; list.Visible = false; pcall(cb, opt)
+        end)
+        Instance.new("UICorner", ob).CornerRadius = UDim.new(0,3)
+    end
+    
+    btn.MouseButton1Click:Connect(function() list.Visible = not list.Visible end)
+    UIS.InputBegan:Connect(function(inp)
+        if inp.UserInputType == Enum.UserInputType.MouseButton1 and list.Visible then
+            task.wait()
+            local mp = UIS:GetMouseLocation()
+            local ap = list.AbsolutePosition; local as = list.AbsoluteSize
+            if mp.X < ap.X or mp.X > ap.X + as.X or mp.Y < ap.Y or mp.Y > ap.Y + as.Y then list.Visible = false end
+        end
+    end)
+    return f
+end
+
+local function Button(parent, name, cb)
+    local b = Instance.new("TextButton", parent)
+    b.Size = UDim2.new(1, -4, 0, 34)
+    b.BackgroundColor3 = Color3.fromRGB(40,40,55)
+    b.Text = "  " .. name
+    b.TextColor3 = Color3.fromRGB(220,220,220)
+    b.TextSize = 13
+    b.TextXAlignment = Enum.TextXAlignment.Left
+    b.Font = Enum.Font.Gotham
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0,4)
+    b.MouseButton1Click:Connect(function() b.BackgroundColor3 = Color3.fromRGB(0,170,255); task.wait(0.1); b.BackgroundColor3 = Color3.fromRGB(40,40,55); pcall(cb) end)
+    return b
+end
+
+local function Label(parent, name)
+    local l = Instance.new("TextLabel", parent)
+    l.Size = UDim2.new(1, -6, 0, 22)
+    l.BackgroundTransparency = 1
+    l.Text = name
+    l.TextColor3 = Color3.fromRGB(0,170,255)
+    l.TextSize = 14
+    l.TextXAlignment = Enum.TextXAlignment.Left
+    l.Font = Enum.Font.GothamBold
+    return l
+end
+
+-- TABS
+local T_Aim = AddTab("Aim")
+local T_Vis = AddTab("Visuals")
+local T_Misc = AddTab("Misc")
+local T_Exp = AddTab("Exploits")
+local T_Skin = AddTab("Skins")
+
+-- CONFIG
+local C = { Aim = { Part = "Head", Team = true }, FOV = 120, Smooth = 0.3, TrigDist = 200, TrigRate = 0.15, ESPTeam = true, AntiPitch = -89, AntiYaw = 180, FOVAmt = 90 }
+
+-- FUNCTIONS
+local function GetClosest(fov)
+    local closest, shortest = nil, fov or 360
     for _, p in pairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then
-            if C.Aim.TeamCheck and p.Team == LocalPlayer.Team then continue end
+        if p ~= LP and p.Character and p.Character:FindFirstChild("Head") then
+            if C.Aim.Team and p.Team == LP.Team then continue end
             local sp, on = Camera:WorldToViewportPoint(p.Character.Head.Position)
             if not on then continue end
-            local mp = UserInputService:GetMouseLocation()
+            local mp = UIS:GetMouseLocation()
             local d = (Vector2.new(sp.X, sp.Y) - mp).Magnitude
-            if d < Shortest then Shortest = d; Closest = p end
+            if d < shortest then shortest = d; closest = p end
         end
     end
-    return Closest
+    return closest
 end
 
--- ============================================
+local silentRemote, silentHooked = nil, false
+for _, o in pairs(game:GetService("ReplicatedStorage"):GetDescendants()) do
+    if o:IsA("RemoteEvent") then
+        local n = o.Name:lower()
+        if n:find("fire") or n:find("shoot") or n:find("bullet") then silentRemote = o; break end
+    end
+end
+
 -- AIMBOT
--- ============================================
-RunService.RenderStepped:Connect(function()
-    if ApexHub.Flags["Toggle_Aimbot"] and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
-        local Target = GetClosest()
-        if Target and Target.Character and Target.Character:FindFirstChild(C.Aim.Part) then
-            local tp = Target.Character[C.Aim.Part].Position
-            Camera.CFrame = Camera.CFrame:Lerp(
-                CFrame.new(Camera.CFrame.Position, tp),
-                C.Aim.Smooth
-            )
+RunSvc.RenderStepped:Connect(function()
+    if _G.Apex_Aimbot and UIS:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
+        local t = GetClosest(C.FOV)
+        if t and t.Character and t.Character:FindFirstChild(C.Aim.Part) then
+            Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, t.Character[C.Aim.Part].Position), C.Smooth)
         end
     end
 end)
 
--- ============================================
--- ESP
--- ============================================
-local ESP_Drawings = {}
-
-local function EnsureESP(p)
-    if not ESP_Drawings[p] then
-        ESP_Drawings[p] = {
-            Box = Drawing.new("Square"),
-            Health = Drawing.new("Square"),
-            Name = Drawing.new("Text"),
-            Tracer = Drawing.new("Line")
-        }
-        ESP_Drawings[p].Box.Thickness = 2; ESP_Drawings[p].Box.Filled = false
-        ESP_Drawings[p].Health.Filled = true
-        ESP_Drawings[p].Name.Size = 13; ESP_Drawings[p].Name.Center = true; ESP_Drawings[p].Name.Outline = true
-        ESP_Drawings[p].Tracer.Thickness = 1
-    end
-    return ESP_Drawings[p]
-end
-
-RunService.RenderStepped:Connect(function()
-    for _, p in pairs(Players:GetPlayers()) do
-        if p == LocalPlayer then continue end
-        local d = EnsureESP(p)
-        local char = p.Character
-        local root = char and char:FindFirstChild("HumanoidRootPart")
-        local hum = char and char:FindFirstChild("Humanoid")
-        local show = false
-        
-        if root and hum and hum.Health > 0 then
-            if C.ESP.TeamCheck and p.Team == LocalPlayer.Team then
-                -- skip
-            else
-                local hp = char.Head.Position
-                local sp, on = Camera:WorldToViewportPoint(hp)
-                if on then
-                    show = true
-                    local scale = (Camera.CFrame.Position - root.Position).Magnitude / 500
-                    local sz = Vector2.new(40/scale, 60/scale)
-                    
-                    if ApexHub.Flags["Toggle_Box"] then
-                        d.Box.Size = sz
-                        d.Box.Position = Vector2.new(sp.X - sz.X/2, sp.Y - sz.Y/2)
-                        d.Box.Color = Color3.fromRGB(0, 255, 0)
-                        d.Box.Visible = true
-                    else d.Box.Visible = false end
-                    
-                    if ApexHub.Flags["Toggle_Health"] and hum then
-                        local hpct = hum.Health / hum.MaxHealth
-                        d.Health.Size = Vector2.new(4, 60/scale)
-                        d.Health.Position = Vector2.new(sp.X + sz.X/2 + 3, sp.Y - 30/scale)
-                        d.Health.Color = Color3.fromRGB(255*(1-hpct), 255*hpct, 0)
-                        d.Health.Visible = true
-                    else d.Health.Visible = false end
-                    
-                    if ApexHub.Flags["Toggle_Name"] then
-                        d.Name.Position = Vector2.new(sp.X, sp.Y - sz.Y/2 - 15)
-                        d.Name.Text = p.Name
-                        d.Name.Color = Color3.new(1,1,1)
-                        d.Name.Visible = true
-                    else d.Name.Visible = false end
-                    
-                    if ApexHub.Flags["Toggle_Tracer"] then
-                        d.Tracer.From = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y)
-                        d.Tracer.To = Vector2.new(sp.X, sp.Y)
-                        d.Tracer.Color = Color3.new(1,1,1)
-                        d.Tracer.Visible = true
-                    else d.Tracer.Visible = false end
-                end
+-- SILENT AIM
+if silentRemote then
+    local mt = getrawmetatable(game)
+    setreadonly(mt, false)
+    local oldNC = mt.__namecall
+    mt.__namecall = function(self, ...)
+        local m = getnamecallmethod()
+        local a = {...}
+        if m == "FireServer" and self == silentRemote and _G.Apex_Silent then
+            local t = GetClosest(360)
+            if t and t.Character and t.Character:FindFirstChild(C.Aim.Part) then
+                a[#a] = (t.Character[C.Aim.Part].Position - LP.Character.Head.Position).Unit
+                return oldNC(self, unpack(a))
             end
         end
-        
-        if not show then
-            d.Box.Visible = false; d.Health.Visible = false
-            d.Name.Visible = false; d.Tracer.Visible = false
-        end
+        return oldNC(self, ...)
     end
-end)
+    setreadonly(mt, true)
+    silentHooked = true
+end
 
--- ============================================
 -- TRIGGERBOT
--- ============================================
-RunService.RenderStepped:Connect(function()
-    if ApexHub.Flags["Toggle_Triggerbot"] then
-        local target = Mouse.Target
-        if target then
-            local plr = Players:GetPlayerFromCharacter(target.Parent)
-            if not plr then plr = Players:GetPlayerFromCharacter(target.Parent and target.Parent.Parent) end
-            if plr and plr ~= LocalPlayer then
-                if C.ESP.TeamCheck and plr.Team == LocalPlayer.Team then return end
-                if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                    local d = (target.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
-                    if d <= C.Trigger.Dist then
-                        mouse1click()
-                        task.wait(C.Trigger.Rate)
+RunSvc.RenderStepped:Connect(function()
+    if _G.Apex_Trigger then
+        local t = Mouse.Target
+        if t then
+            local p = Players:GetPlayerFromCharacter(t.Parent)
+            if not p then p = Players:GetPlayerFromCharacter(t.Parent and t.Parent.Parent) end
+            if p and p ~= LP then
+                if C.Aim.Team and p.Team == LP.Team then return end
+                if LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
+                    if (t.Position - LP.Character.HumanoidRootPart.Position).Magnitude <= C.TrigDist then
+                        mouse1click(); task.wait(C.TrigRate)
                     end
                 end
             end
@@ -712,62 +389,100 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- ============================================
--- SILENT AIM
--- ============================================
-local ShootRemote = nil
-for _, obj in pairs(game:GetService("ReplicatedStorage"):GetDescendants()) do
-    if obj:IsA("RemoteEvent") then
-        local n = obj.Name:lower()
-        if n:find("fire") or n:find("shoot") or n:find("bullet") then
-            ShootRemote = obj; break
+-- ESP
+local ESP = {}
+RunSvc.RenderStepped:Connect(function()
+    for _, p in pairs(Players:GetPlayers()) do
+        if p == LP then continue end
+        if not ESP[p] then
+            ESP[p] = {
+                Box = Drawing.new("Square"), Health = Drawing.new("Square"),
+                Name = Drawing.new("Text"), Tracer = Drawing.new("Line")
+            }
+            ESP[p].Box.Thickness = 2; ESP[p].Box.Filled = false
+            ESP[p].Health.Filled = true
+            ESP[p].Name.Size = 13; ESP[p].Name.Center = true; ESP[p].Name.Outline = true
+            ESP[p].Tracer.Thickness = 1
         end
-    end
-end
-
-if ShootRemote then
-    local mt = getrawmetatable(game)
-    setreadonly(mt, false)
-    local oldNC = mt.__namecall
-    mt.__namecall = function(self, ...)
-        local m = getnamecallmethod()
-        local a = {...}
-        if m == "FireServer" and self == ShootRemote and ApexHub.Flags["Toggle_SilentAim"] then
-            local Target = GetClosest()
-            if Target and Target.Character and Target.Character:FindFirstChild(C.Silent.Part) then
-                local dir = (Target.Character[C.Silent.Part].Position - LocalPlayer.Character.Head.Position).Unit
-                a[#a] = dir
-                return oldNC(self, unpack(a))
+        local d = ESP[p]; local c = p.Character; local r = c and c:FindFirstChild("HumanoidRootPart"); local h = c and c:FindFirstChild("Humanoid")
+        local show = false
+        if r and h and h.Health > 0 then
+            if C.ESPTeam and p.Team == LP.Team then
+            else
+                local sp, on = Camera:WorldToViewportPoint(c.Head.Position)
+                if on then
+                    show = true; local s = (Camera.CFrame.Position - r.Position).Magnitude / 500
+                    local sz = Vector2.new(40/s, 60/s)
+                    if _G.Apex_Box then
+                        d.Box.Size = sz; d.Box.Position = Vector2.new(sp.X - sz.X/2, sp.Y - sz.Y/2)
+                        d.Box.Color = Color3.fromRGB(0,255,0); d.Box.Visible = true
+                    else d.Box.Visible = false end
+                    if _G.Apex_Health and h then
+                        local hp = h.Health / h.MaxHealth
+                        d.Health.Size = Vector2.new(4, 60/s); d.Health.Position = Vector2.new(sp.X + sz.X/2 + 3, sp.Y - 30/s)
+                        d.Health.Color = Color3.fromRGB(255*(1-hp), 255*hp, 0); d.Health.Visible = true
+                    else d.Health.Visible = false end
+                    if _G.Apex_Name then
+                        d.Name.Position = Vector2.new(sp.X, sp.Y - sz.Y/2 - 15)
+                        d.Name.Text = p.Name; d.Name.Color = Color3.new(1,1,1); d.Name.Visible = true
+                    else d.Name.Visible = false end
+                    if _G.Apex_Tracer then
+                        d.Tracer.From = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y)
+                        d.Tracer.To = Vector2.new(sp.X, sp.Y); d.Tracer.Color = Color3.new(1,1,1); d.Tracer.Visible = true
+                    else d.Tracer.Visible = false end
+                end
             end
         end
-        return oldNC(self, ...)
+        if not show then d.Box.Visible = false; d.Health.Visible = false; d.Name.Visible = false; d.Tracer.Visible = false end
     end
-    setreadonly(mt, true)
-end
+end)
 
--- ============================================
 -- ANTI-AIM
--- ============================================
-RunService.RenderStepped:Connect(function()
-    if ApexHub.Flags["Toggle_AntiAim"] and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        local r = LocalPlayer.Character.HumanoidRootPart
-        r.Orientation = Vector3.new(C.Anti.Pitch, r.Orientation.Y + C.Anti.Yaw, 0)
+RunSvc.RenderStepped:Connect(function()
+    if _G.Apex_Anti and LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
+        LP.Character.HumanoidRootPart.Orientation = Vector3.new(C.AntiPitch, LP.Character.HumanoidRootPart.Orientation.Y + C.AntiYaw, 0)
     end
 end)
 
--- ============================================
--- FOV CHANGER
--- ============================================
-RunService.RenderStepped:Connect(function()
-    if ApexHub.Flags["Toggle_FOVChanger"] then
-        Camera.FieldOfView = C.Misc.FOV
-    end
+-- FOV
+RunSvc.RenderStepped:Connect(function()
+    if _G.Apex_FOV then Camera.FieldOfView = C.FOVAmt end
 end)
 
--- ============================================
--- REMOTE SPY
--- ============================================
-local function EnableRemoteSpy()
+-- === GUI: AIM ===
+Label(T_Aim, "AIMBOT")
+Toggle(T_Aim, "Aimbot", false, function(v) _G.Apex_Aimbot = v end)
+Slider(T_Aim, "FOV", 10, 360, 120, function(v) C.FOV = v end, "°")
+Slider(T_Aim, "Smoothness", 0.05, 1, 0.3, function(v) C.Smooth = v end, "")
+Dropdown(T_Aim, "Part", {"Head", "Torso", "HumanoidRootPart"}, "Head", function(v) C.Aim.Part = v end)
+Toggle(T_Aim, "Team Check", true, function(v) C.Aim.Team = v end)
+Label(T_Aim, "SILENT AIM")
+Toggle(T_Aim, "Silent Aim", false, function(v) _G.Apex_Silent = v end)
+Label(T_Aim, "TRIGGERBOT")
+Toggle(T_Aim, "Triggerbot", false, function(v) _G.Apex_Trigger = v end)
+Slider(T_Aim, "Distance", 10, 500, 200, function(v) C.TrigDist = v end, " studs")
+Slider(T_Aim, "Fire Rate", 0.05, 0.5, 0.15, function(v) C.TrigRate = v end, "s")
+
+-- === GUI: VISUALS ===
+Label(T_Vis, "ESP")
+Toggle(T_Vis, "Box ESP", false, function(v) _G.Apex_Box = v end)
+Toggle(T_Vis, "Health Bar", false, function(v) _G.Apex_Health = v end)
+Toggle(T_Vis, "Name Tags", false, function(v) _G.Apex_Name = v end)
+Toggle(T_Vis, "Tracers", false, function(v) _G.Apex_Tracer = v end)
+Toggle(T_Vis, "Team Check", true, function(v) C.ESPTeam = v end)
+
+-- === GUI: MISC ===
+Label(T_Misc, "CAMERA")
+Toggle(T_Misc, "FOV Changer", false, function(v) _G.Apex_FOV = v end)
+Slider(T_Misc, "FOV Amount", 30, 120, 90, function(v) C.FOVAmt = v end, "°")
+Label(T_Misc, "ANTI-AIM")
+Toggle(T_Misc, "Anti-Aim", false, function(v) _G.Apex_Anti = v end)
+Slider(T_Misc, "Pitch", -90, 90, -89, function(v) C.AntiPitch = v end, "°")
+Slider(T_Misc, "Yaw", -180, 180, 180, function(v) C.AntiYaw = v end, "°")
+
+-- === GUI: EXPLOITS ===
+Label(T_Exp, "REMOTE SPY")
+Button(T_Exp, "Enable Remote Spy", function()
     local mt = getrawmetatable(game)
     setreadonly(mt, false)
     local oldNC = mt.__namecall
@@ -780,181 +495,27 @@ local function EnableRemoteSpy()
         return oldNC(self, ...)
     end
     setreadonly(mt, true)
-    warn("[ApexHub] Remote Spy enabled")
-end
-
--- ============================================
--- FIND ECONOMY REMOTES
--- ============================================
-local function FindEconomy()
-    local remotes = {}
+    warn("[ApexHub] Remote Spy ON")
+end)
+Label(T_Exp, "ECONOMY")
+Button(T_Exp, "Find Economy Remotes", function()
+    local c = 0
     for _, s in pairs(game:GetChildren()) do
         for _, o in pairs(s:GetDescendants()) do
             if o:IsA("RemoteEvent") then
                 local n = o.Name:lower()
-                if n:find("money") or n:find("cash") or n:find("buy") or n:find("purchase") or
-                   n:find("shop") or n:find("skin") or n:find("cosmetic") or n:find("give") then
-                    table.insert(remotes, o)
-                    print("[ECONOMY]", o:GetFullName())
+                if n:find("money") or n:find("cash") or n:find("buy") or n:find("shop") or n:find("skin") then
+                    c = c + 1; print("[ECONOMY]", o:GetFullName())
                 end
             end
         end
     end
-    warn("Found " .. #remotes .. " economy remotes")
-end
-
--- ============================================
--- SKIN CHANGER
--- ============================================
-local SkinChanger = {}
-SkinChanger.CurrentSkin = nil
-SkinChanger.Originals = {}
-
-SkinChanger.Skins = {
-    ["AK-47"] = {"Dragon Lore", "Fire Serpent", "Vulcan", "Redline", "Default"},
-    ["M4A1"] = {"Dragon King", "Howl", "Neo-Noir", "Decimator", "Default"},
-    ["AWP"] = {"Dragon Lore AWP", "Medusa", "Oni Taiji", "Electric Hive", "Default"},
-    ["Deagle"] = {"Blaze", "Printstream", "Code Red", "Conspiracy", "Default"},
-    ["Knife"] = {"Karambit Fade", "Butterfly Fade", "M9 Bayonet", "Flip Knife", "Default"}
-}
-
-local function ApplySkin(tool)
-    if not tool or not tool:IsA("Tool") then return end
-    if not SkinChanger.Originals[tool] then
-        local h = tool:FindFirstChild("Handle")
-        if h then
-            SkinChanger.Originals[tool] = { Color = h.Color, Material = h.Material, Trans = h.Transparency }
-        end
-    end
-    
-    -- Highlight
-    local hl = tool:FindFirstChild("_SkinHL")
-    if not hl then
-        hl = Instance.new("Highlight")
-        hl.Name = "_SkinHL"
-        hl.FillColor = Color3.fromRGB(255, 215, 0)
-        hl.FillTransparency = 0.5
-        hl.OutlineColor = Color3.new(1,1,1)
-        hl.OutlineTransparency = 0.7
-        hl.Parent = tool
-    end
-    hl.Enabled = true
-    
-    local h = tool:FindFirstChild("Handle")
-    if h then
-        h.Color = Color3.fromRGB(255, 200, 50)
-        h.Material = Enum.Material.ForceField
-    end
-    for _, c in pairs(tool:GetDescendants()) do
-        if c:IsA("MeshPart") then
-            c.Color = Color3.fromRGB(255, 200, 50)
-            c.Material = Enum.Material.ForceField
-        end
-    end
-end
-
-function SkinChanger.Apply()
-    if LocalPlayer.Character then
-        for _, t in pairs(LocalPlayer.Character:GetChildren()) do
-            if t:IsA("Tool") then ApplySkin(t) end
-        end
-    end
-    local bp = LocalPlayer:FindFirstChild("Backpack")
-    if bp then
-        for _, t in pairs(bp:GetChildren()) do
-            if t:IsA("Tool") then ApplySkin(t) end
-        end
-    end
-    warn("[ApexHub] Skin applied (local)")
-end
-
-function SkinChanger.Reset()
-    if LocalPlayer.Character then
-        for _, t in pairs(LocalPlayer.Character:GetChildren()) do
-            if t:IsA("Tool") then
-                local hl = t:FindFirstChild("_SkinHL")
-                if hl then hl:Destroy() end
-                local h = t:FindFirstChild("Handle")
-                if h and SkinChanger.Originals[t] then
-                    h.Color = SkinChanger.Originals[t].Color
-                    h.Material = SkinChanger.Originals[t].Material
-                    h.Transparency = SkinChanger.Originals[t].Trans
-                end
-            end
-        end
-    end
-    local bp = LocalPlayer:FindFirstChild("Backpack")
-    if bp then
-        for _, t in pairs(bp:GetChildren()) do
-            if t:IsA("Tool") then
-                local hl = t:FindFirstChild("_SkinHL")
-                if hl then hl:Destroy() end
-                local h = t:FindFirstChild("Handle")
-                if h and SkinChanger.Originals[t] then
-                    h.Color = SkinChanger.Originals[t].Color
-                    h.Material = SkinChanger.Originals[t].Material
-                    h.Transparency = SkinChanger.Originals[t].Trans
-                end
-            end
-        end
-    end
-    SkinChanger.Originals = {}
-    warn("[ApexHub] Skin reset")
-end
-
--- ============================================
--- GUI: TAB AIM
--- ============================================
-ApexHub:Label(T_Aim, "AIMBOT")
-ApexHub:Toggle(T_Aim, "Aimbot", false, function(v) end)
-ApexHub:Slider(T_Aim, "FOV", 10, 360, 120, function(v) C.Aim.FOV = v end, "°")
-ApexHub:Slider(T_Aim, "Smoothness", 0.05, 1, 0.3, function(v) C.Aim.Smooth = v end, "")
-ApexHub:Dropdown(T_Aim, "Target Part", {"Head", "Torso", "HumanoidRootPart"}, "Head", function(v) C.Aim.Part = v end)
-ApexHub:Toggle(T_Aim, "Team Check", true, function(v) C.Aim.TeamCheck = v end)
-
-ApexHub:Label(T_Aim, "SILENT AIM")
-ApexHub:Toggle(T_Aim, "Silent Aim", false, function(v) end)
-ApexHub:Dropdown(T_Aim, "Silent Part", {"Head", "Torso", "HumanoidRootPart"}, "Head", function(v) C.Silent.Part = v end)
-
-ApexHub:Label(T_Aim, "TRIGGERBOT")
-ApexHub:Toggle(T_Aim, "Triggerbot", false, function(v) end)
-ApexHub:Slider(T_Aim, "Trigger Distance", 10, 500, 200, function(v) C.Trigger.Dist = v end, " s")
-ApexHub:Slider(T_Aim, "Fire Rate", 0.05, 0.5, 0.15, function(v) C.Trigger.Rate = v end, "s")
-
--- ============================================
--- GUI: TAB VISUALS
--- ============================================
-ApexHub:Label(T_Visuals, "ESP / WALLHACK")
-ApexHub:Toggle(T_Visuals, "Box ESP", false, function(v) end)
-ApexHub:Toggle(T_Visuals, "Health Bar", false, function(v) end)
-ApexHub:Toggle(T_Visuals, "Name Tags", false, function(v) end)
-ApexHub:Toggle(T_Visuals, "Tracers", false, function(v) end)
-ApexHub:Toggle(T_Visuals, "Team Check", true, function(v) C.ESP.TeamCheck = v end)
-
--- ============================================
--- GUI: TAB MISC
--- ============================================
-ApexHub:Label(T_Misc, "CAMERA")
-ApexHub:Toggle(T_Misc, "FOV Changer", false, function(v) end)
-ApexHub:Slider(T_Misc, "FOV Amount", 30, 120, 90, function(v) C.Misc.FOV = v end, "°")
-
-ApexHub:Label(T_Misc, "ANTI-AIM")
-ApexHub:Toggle(T_Misc, "Anti-Aim", false, function(v) end)
-ApexHub:Slider(T_Misc, "Pitch", -90, 90, -89, function(v) C.Anti.Pitch = v end, "°")
-ApexHub:Slider(T_Misc, "Yaw", -180, 180, 180, function(v) C.Anti.Yaw = v end, "°")
-
--- ============================================
--- GUI: TAB EXPLOITS
--- ============================================
-ApexHub:Label(T_Exploits, "ANALYSIS")
-ApexHub:Button(T_Exploits, "Enable Remote Spy", EnableRemoteSpy)
-ApexHub:Button(T_Exploits, "Find Economy Remotes", FindEconomy)
-
-ApexHub:Label(T_Exploits, "ANTICHEAT")
-ApexHub:Button(T_Exploits, "Bypass Anticheat", function()
+    warn("Found " .. c .. " economy remotes")
+end)
+Label(T_Exp, "ANTICHEAT")
+Button(T_Exp, "Bypass Anticheat", function()
     pcall(function()
-        local mt = getrawmetatable(game)
-        setreadonly(mt, false)
+        local mt = getrawmetatable(game); setreadonly(mt, false)
         local old = mt.__index
         mt.__index = function(s, k)
             if k == "detectInjector" or k == "isExploit" then return function() return false end end
@@ -965,55 +526,72 @@ ApexHub:Button(T_Exploits, "Bypass Anticheat", function()
     warn("[ApexHub] Bypass attempted")
 end)
 
--- ============================================
--- GUI: TAB SKINS
--- ============================================
-ApexHub:Label(T_Skins, "SKIN CHANGER (LOCAL)")
-ApexHub:Dropdown(T_Skins, "Weapon", {"AK-47", "M4A1", "AWP", "Deagle", "Knife"}, "AK-47", function(v) end)
-ApexHub:Dropdown(T_Skins, "Skin", SkinChanger.Skins["AK-47"], "Dragon Lore", function(v) end)
-ApexHub:Button(T_Skins, "Apply Skin", SkinChanger.Apply)
-ApexHub:Button(T_Skins, "Reset Skin", SkinChanger.Reset)
-
--- ============================================
--- TOGGLE MENU (RIGHT SHIFT)
--- ============================================
-UserInputService.InputBegan:Connect(function(input)
-    if input.KeyCode == Enum.KeyCode.RightShift then
-        MainFrame.Visible = not MainFrame.Visible
+-- === GUI: SKINS ===
+Label(T_Skin, "LOCAL SKIN CHANGER")
+local skinWeapon = "AK-47"
+Dropdown(T_Skin, "Weapon", {"AK-47", "M4A1", "AWP", "Deagle", "Knife"}, "AK-47", function(v) skinWeapon = v end)
+Button(T_Skin, "Apply Skin", function()
+    if LP.Character then
+        for _, t in pairs(LP.Character:GetChildren()) do
+            if t:IsA("Tool") then
+                local hl = t:FindFirstChild("_HL")
+                if not hl then hl = Instance.new("Highlight", t); hl.Name = "_HL" end
+                hl.FillColor = Color3.fromRGB(255,215,0); hl.FillTransparency = 0.5; hl.Enabled = true
+                local h = t:FindFirstChild("Handle")
+                if h then h.Color = Color3.fromRGB(255,200,50); h.Material = Enum.Material.ForceField end
+            end
+        end
     end
+    local bp = LP:FindFirstChild("Backpack")
+    if bp then
+        for _, t in pairs(bp:GetChildren()) do
+            if t:IsA("Tool") then
+                local hl = t:FindFirstChild("_HL")
+                if not hl then hl = Instance.new("Highlight", t); hl.Name = "_HL" end
+                hl.FillColor = Color3.fromRGB(255,215,0); hl.FillTransparency = 0.5; hl.Enabled = true
+                local h = t:FindFirstChild("Handle")
+                if h then h.Color = Color3.fromRGB(255,200,50); h.Material = Enum.Material.ForceField end
+            end
+        end
+    end
+    warn("[ApexHub] Skin applied (local)")
+end)
+Button(T_Skin, "Reset Skin", function()
+    local function resetChar(char)
+        for _, t in pairs(char:GetChildren()) do
+            if t:IsA("Tool") then
+                local hl = t:FindFirstChild("_HL"); if hl then hl:Destroy() end
+                local h = t:FindFirstChild("Handle")
+                if h then h.Color = Color3.new(1,1,1); h.Material = Enum.Material.Plastic end
+            end
+        end
+    end
+    if LP.Character then resetChar(LP.Character) end
+    local bp = LP:FindFirstChild("Backpack")
+    if bp then resetChar(bp) end
+    warn("[ApexHub] Skin reset")
 end)
 
--- ============================================
--- ФИНАЛИЗАЦИЯ GUI
--- ============================================
-MainFrame.Parent = ScreenGui
-ScreenGui.Parent = game:GetService("CoreGui")
+-- === OPEN/CLOSE ===
+UIS.InputBegan:Connect(function(inp)
+    if inp.KeyCode == Enum.KeyCode.RightShift then Main.Visible = not Main.Visible end
+end)
 
--- ============================================
--- ВАТЕРМАРКА НА ЭКРАНЕ
--- ============================================
-local ScreenWatermark = Instance.new("TextLabel")
-ScreenWatermark.Name = "ApexWM"
-ScreenWatermark.Size = UDim2.new(0, 220, 0, 20)
-ScreenWatermark.Position = UDim2.new(0, 10, 1, -30)
-ScreenWatermark.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-ScreenWatermark.BackgroundTransparency = 0.4
-ScreenWatermark.Text = "APEX HUB v2.0 | AUTHORIZED PENTEST"
-ScreenWatermark.TextColor3 = ApexHub.Theme.Accent
-ScreenWatermark.TextSize = 12
-ScreenWatermark.Font = Enum.Font.GothamBold
-ScreenWatermark.TextXAlignment = Enum.TextXAlignment.Left
+Main.Parent = Gui
+Gui.Parent = game:GetService("CoreGui")
 
-local WM_2 = Instance.new("UICorner")
-WM_2.CornerRadius = UDim.new(0, 4)
-WM_2.Parent = ScreenWatermark
-ScreenWatermark.Parent = ScreenGui
+-- Watermark
+local WM = Instance.new("TextLabel", Gui)
+WM.Size = UDim2.new(0, 220, 0, 20)
+WM.Position = UDim2.new(0, 10, 1, -30)
+WM.BackgroundColor3 = Color3.fromRGB(0,0,0); WM.BackgroundTransparency = 0.4
+WM.Text = "APEX HUB v2.0 | AUTHORIZED"
+WM.TextColor3 = Color3.fromRGB(0,170,255); WM.TextSize = 12; WM.Font = Enum.Font.GothamBold
+WM.TextXAlignment = Enum.TextXAlignment.Left
+Instance.new("UICorner", WM).CornerRadius = UDim.new(0,4)
 
--- ============================================
--- ЗАВЕРШЕНИЕ ЗАГРУЗКИ
--- ============================================
-print("=" .. string.rep("=", 60) .. "=")
-print("  APEX HUB v2.0 - Blox Strike Suite Loaded")
-print("  Press RIGHT SHIFT to toggle menu")
-print("  Authorized penetration testing only")
-print("=" .. string.rep("=", 60) .. "=")
+-- Corner on main
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0,8)
+Instance.new("UICorner", Title).CornerRadius = UDim.new(0,8)
+
+print("=== APEX HUB v2.0 loaded | RightShift to toggle ===")
