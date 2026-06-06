@@ -1,587 +1,610 @@
---[[
-    Blox Fruits Apex Dominion Hub v2026
-    Полноценный скрипт с автофармом, ESP, телепортами и всем необходимым
-    Основан на Rayfield GUI
-]]
+-- ============================================================
+-- BLOX STRIKE - COMPLETE PENETRATION TEST SUITE v2.0
+-- Aimbot | ESP/Wallhack | Triggerbot | Silent Aim | Anti-Aim
+-- Remote Spy | Economy Exploits | Anticheat Bypass | Skin Changer
+-- ТОЛЬКО ДЛЯ АВТОРИЗОВАННОГО ТЕСТИРОВАНИЯ
+-- ============================================================
 
--- Подключаем Rayfield (актуальная ссылка)
-local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Rayfield/main/source'))()
+-- ============================================
+-- ЛОАДЕР GUI
+-- ============================================
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/7kayoh/AC/main/Library.lua"))()
+local Window = Library:CreateWindow("Blox Strike - Security Test Suite v2.0")
+local Tab1 = Window:CreateTab("Aim")
+local Tab2 = Window:CreateTab("Visuals")
+local Tab3 = Window:CreateTab("Misc")
+local Tab4 = Window:CreateTab("Exploits")
+local Tab5 = Window:CreateTab("Skins")
 
+-- ============================================
+-- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
+-- ============================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
-local VirtualInputManager = game:GetService("VirtualInputManager")
-local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
+local LocalPlayer = Players.LocalPlayer
+local Mouse = LocalPlayer:GetMouse()
+local Workspace = game:GetService("Workspace")
 
--- Имя игрока для приветствия
-local PlayerName = LocalPlayer.Name
-
--- Основное окно
-local Window = Rayfield:CreateWindow({
-    Name = "🗡️ Blox Fruits Apex Dominion Hub v2026 🔥 | " .. PlayerName,
-    LoadingTitle = "Apex Dominion Loading...",
-    LoadingSubtitle = "Полный спектр функций для фарма",
-    ConfigurationSaving = {
-        Enabled = true,
-        FolderName = "ApexDominion",
-        FileName = "Config2026"
-    },
-    KeySystem = false
-})
-
--- Приветственное уведомление
-Rayfield:Notify({
-    Title = "Добро пожаловать, " .. PlayerName .. "!",
-    Content = "Apex Dominion загружен. Используй на здоровье!",
-    Duration = 6.5,
-    Image = 4483362458
-})
-
--- Вкладки
-local FarmTab = Window:CreateTab("⛏️ Фарм", 4483362458)
-local CombatTab = Window:CreateTab("⚔️ Бой", 4483362458)
-local MovementTab = Window:CreateTab("🚀 Передвижение", 4483362458)
-local VisualsTab = Window:CreateTab("👁️ ESP", 4483362458)
-local TeleportTab = Window:CreateTab("📍 Телепорты", 4483362458)
-local StatsTab = Window:CreateTab("📊 Статы", 4483362458)
-local MiscTab = Window:CreateTab("⚙️ Разное", 4483362458)
-
--- ==================== ПЕРЕМЕННЫЕ ====================
-
-local Toggles = {
-    AutoFarm = false,
-    AutoQuest = false,
-    AutoBoss = false,
-    AutoRaid = false,
-    FruitSniper = false,
-    AutoStats = false,
-    AutoHaki = false,
-    KillAura = false,
-    Noclip = false,
-    Fly = false,
-    InfAmmo = false,
-    ESPPlayers = false,
-    ESPMobs = false,
-    ESPFruits = false,
-    ESPChests = false,
-    AntiKick = false
+-- ============================================
+-- КОНФИГУРАЦИЯ
+-- ============================================
+local Config = {
+    AimBot = { Enabled = false, FOV = 120, Smoothness = 0.25, TargetPart = "Head", TeamCheck = true },
+    ESP = { Enabled = true, Box = true, Health = true, Name = true, Tracer = false, TeamCheck = true },
+    TriggerBot = { Enabled = false, Distance = 200, FireRate = 0.15 },
+    SilentAim = { Enabled = false, HitChance = 100, TargetPart = "Head" },
+    AntiAim = { Enabled = false, Pitch = -89, Yaw = 180 },
+    Misc = { FOVChanger = false, FOVAmount = 120 },
+    SkinChanger = { Enabled = false }
 }
 
-local Sliders = {
-    FarmRadius = 500,
-    KillAuraRadius = 25,
-    WalkSpeed = 16,
-    JumpPower = 50,
-    FlySpeed = 50,
-    Melee = 1,
-    Defense = 1,
-    Sword = 1,
-    Gun = 1,
-    Fruit = 1
-}
-
-local Connections = {}
-local ESPObjects = {}
-
--- Удалённая функция для вызовов (CommF_)
-local function RemoteInvoke(...)
-    local args = {...}
-    return ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("CommF_"):InvokeServer(unpack(args))
-end
-
--- Проверка на наличие персонажа
-local function getChar()
-    return LocalPlayer.Character
-end
-
-local function getHRP()
-    local char = getChar()
-    if char then
-        return char:FindFirstChild("HumanoidRootPart")
-    end
-end
-
-local function getHumanoid()
-    local char = getChar()
-    if char then
-        return char:FindFirstChildOfClass("Humanoid")
-    end
-end
-
--- ==================== АВТОФАРМ (УРОВНИ / КВЕСТЫ) ====================
-
-local function findClosestMob()
-    local hrp = getHRP()
-    if not hrp then return nil end
-    local closest, dist = nil, math.huge
-    for _, mob in pairs(workspace:FindFirstChild("Enemies"):GetChildren()) do
-        if mob:FindFirstChild("HumanoidRootPart") and mob:FindFirstChild("Humanoid") and mob.Humanoid.Health > 0 then
-            local d = (mob.HumanoidRootPart.Position - hrp.Position).magnitude
-            if d < dist then
-                dist = d
-                closest = mob
+-- ============================================
+-- ПОИСК БЛИЖАЙШЕГО ИГРОКА
+-- ============================================
+local function GetClosestPlayer()
+    local Closest = nil
+    local Shortest = Config.AimBot.FOV
+    
+    for _, Player in pairs(Players:GetPlayers()) do
+        if Player ~= LocalPlayer and Player.Character and Player.Character:FindFirstChild("Head") then
+            if Config.AimBot.TeamCheck and Player.Team == LocalPlayer.Team then continue end
+            
+            local HeadPos = Player.Character.Head.Position
+            local ScreenPos, OnScreen = Camera:WorldToViewportPoint(HeadPos)
+            if not OnScreen then continue end
+            
+            local MousePos = UserInputService:GetMouseLocation()
+            local Distance = (Vector2.new(ScreenPos.X, ScreenPos.Y) - MousePos).Magnitude
+            
+            if Distance < Shortest then
+                Shortest = Distance
+                Closest = Player
             end
         end
     end
-    return closest
+    return Closest
 end
 
-local function attackMob(mob)
-    if not mob then return end
-    local hrp = getHRP()
-    if not hrp then return end
-    -- Телепортируемся поближе
-    hrp.CFrame = mob.HumanoidRootPart.CFrame * CFrame.new(0, 5, 0)
-    -- Наносим урон (можно использовать мышь, но проще использовать удалённую функцию атаки, если есть)
-    -- В Blox Fruits атака происходит через экипированное оружие. Мы просто будем нажимать кнопку мыши.
-    VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 1)
-    task.wait(0.1)
-    VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 1)
-end
-
-local function autoFarmLoop()
-    while Toggles.AutoFarm do
-        local mob = findClosestMob()
-        if mob then
-            attackMob(mob)
-        end
-        task.wait(0.1)
-    end
-end
-
-FarmTab:CreateToggle({
-    Name = "Автофарм мобов",
-    CurrentValue = false,
-    Callback = function(v)
-        Toggles.AutoFarm = v
-        if v then
-            task.spawn(autoFarmLoop)
+-- ============================================
+-- МОДУЛЬ 1: AIMBOT
+-- ============================================
+RunService.RenderStepped:Connect(function()
+    if Config.AimBot.Enabled and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
+        local Target = GetClosestPlayer()
+        if Target and Target.Character and Target.Character:FindFirstChild(Config.AimBot.TargetPart) then
+            local TargetPos = Target.Character[Config.AimBot.TargetPart].Position
+            local LookVector = (TargetPos - Camera.CFrame.Position).Unit
+            local NewCFrame = CFrame.new(Camera.CFrame.Position, Camera.CFrame.Position + LookVector)
+            Camera.CFrame = Camera.CFrame:Lerp(NewCFrame, Config.AimBot.Smoothness)
         end
     end
-})
+end)
 
-FarmTab:CreateSlider({
-    Name = "Радиус поиска мобов",
-    Range = {100, 1000},
-    Increment = 50,
-    CurrentValue = Sliders.FarmRadius,
-    Callback = function(v) Sliders.FarmRadius = v end
-})
+-- ============================================
+-- МОДУЛЬ 2: ESP / WALLHACK
+-- ============================================
+local ESPObjects = {}
 
--- ==================== АВТО-КВЕСТЫ ====================
+local function CreateESP(Player)
+    if ESPObjects[Player] then return end
+    
+    local Box = Drawing.new("Square")
+    Box.Visible = false; Box.Color = Color3.fromRGB(0, 255, 0); Box.Thickness = 2; Box.Filled = false
+    
+    local HealthBar = Drawing.new("Square")
+    HealthBar.Visible = false; HealthBar.Color = Color3.fromRGB(0, 255, 0); HealthBar.Filled = true
+    
+    local NameTag = Drawing.new("Text")
+    NameTag.Visible = false; NameTag.Size = 14; NameTag.Center = true; NameTag.Outline = true
+    NameTag.Color = Color3.fromRGB(255, 255, 255)
+    
+    local TracerLine = Drawing.new("Line")
+    TracerLine.Visible = false; TracerLine.Color = Color3.fromRGB(255, 255, 255); TracerLine.Thickness = 1
+    
+    ESPObjects[Player] = { Box = Box, HealthBar = HealthBar, NameTag = NameTag, Tracer = TracerLine }
+end
 
-local function takeQuest()
-    -- Поиск NPC с меткой "!" (обычно это квестодатель)
-    for _, v in pairs(workspace:GetDescendants()) do
-        if v:IsA("Part") and v.Name == "Part" and v.Parent and v.Parent:FindFirstChild("Head") and v.Parent:FindFirstChild("Humanoid") then
-            local npc = v.Parent
-            if npc:FindFirstChild("Dialog") or npc:FindFirstChild("ClickDetector") then
-                -- Подойдём к NPC
-                local hrp = getHRP()
-                if hrp then
-                    hrp.CFrame = npc.HumanoidRootPart.CFrame * CFrame.new(0, 0, 5)
-                    task.wait(0.5)
-                    -- Активируем диалог (например, через ClickDetector)
-                    local cd = npc:FindFirstChildOfClass("ClickDetector")
-                    if cd then
-                        fireclickdetector(cd)
-                    end
-                    -- Выбираем первый вариант (обычно "Take Quest")
-                    task.wait(0.5)
-                    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.One, false, game)
-                    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.One, false, game)
+local function UpdateESP()
+    for _, Player in pairs(Players:GetPlayers()) do
+        if Player == LocalPlayer then continue end
+        if not ESPObjects[Player] then CreateESP(Player) end
+        
+        local ESPData = ESPObjects[Player]
+        local Character = Player.Character
+        local RootPart = Character and Character:FindFirstChild("HumanoidRootPart")
+        local Humanoid = Character and Character:FindFirstChild("Humanoid")
+        
+        local IsVisible = false
+        
+        if Config.ESP.TeamCheck and Player.Team == LocalPlayer.Team then
+            -- skip teammates
+        elseif RootPart and Humanoid and Humanoid.Health > 0 then
+            local HeadPos = Character.Head.Position
+            local ScreenPos, OnScreen = Camera:WorldToViewportPoint(HeadPos)
+            
+            if OnScreen then
+                IsVisible = true
+                local Scale = (Camera.CFrame.Position - RootPart.Position).Magnitude / 500
+                local Size = Vector2.new(40 / Scale, 60 / Scale)
+                
+                if Config.ESP.Box then
+                    ESPData.Box.Size = Size
+                    ESPData.Box.Position = Vector2.new(ScreenPos.X - Size.X/2, ScreenPos.Y - Size.Y/2)
+                    ESPData.Box.Visible = true
                 end
+                
+                if Config.ESP.Health and Humanoid then
+                    local HealthPercent = Humanoid.Health / Humanoid.MaxHealth
+                    local BarHeight = 60 / Scale
+                    ESPData.HealthBar.Size = Vector2.new(4, BarHeight)
+                    ESPData.HealthBar.Position = Vector2.new(ScreenPos.X + Size.X/2 + 3, ScreenPos.Y - BarHeight/2)
+                    ESPData.HealthBar.Color = Color3.fromRGB(255 * (1 - HealthPercent), 255 * HealthPercent, 0)
+                    ESPData.HealthBar.Visible = true
+                end
+                
+                if Config.ESP.Name then
+                    ESPData.NameTag.Position = Vector2.new(ScreenPos.X, ScreenPos.Y - Size.Y/2 - 16)
+                    ESPData.NameTag.Text = Player.Name
+                    ESPData.NameTag.Visible = true
+                end
+                
+                if Config.ESP.Tracer then
+                    ESPData.Tracer.From = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y)
+                    ESPData.Tracer.To = Vector2.new(ScreenPos.X, ScreenPos.Y)
+                    ESPData.Tracer.Visible = true
+                end
+            end
+        end
+        
+        if not IsVisible then
+            ESPData.Box.Visible = false
+            ESPData.HealthBar.Visible = false
+            ESPData.NameTag.Visible = false
+            ESPData.Tracer.Visible = false
+        end
+    end
+end
+
+RunService.RenderStepped:Connect(UpdateESP)
+
+-- ============================================
+-- МОДУЛЬ 3: TRIGGERBOT
+-- ============================================
+RunService.RenderStepped:Connect(function()
+    if Config.TriggerBot.Enabled then
+        local Target = Mouse.Target
+        if Target then
+            local Player = Players:GetPlayerFromCharacter(Target.Parent)
+            if not Player then
+                local Model = Target.Parent.Parent
+                Player = Players:GetPlayerFromCharacter(Model)
+            end
+            
+            if Player and Player ~= LocalPlayer then
+                if Config.TriggerBot.Distance > 0 and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                    local Dist = (Target.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
+                    if Dist <= Config.TriggerBot.Distance then
+                        mouse1click()
+                        task.wait(Config.TriggerBot.FireRate)
+                    end
+                end
+            end
+        end
+    end
+end)
+
+-- ============================================
+-- МОДУЛЬ 4: SILENT AIM (Hook RemoteEvent выстрела)
+-- ============================================
+local function FindShootRemote()
+    for _, obj in pairs(game:GetService("ReplicatedStorage"):GetDescendants()) do
+        if obj:IsA("RemoteEvent") then
+            local n = obj.Name:lower()
+            if n:find("fire") or n:find("shoot") or n:find("bullet") or n:find("hit") then
+                return obj
+            end
+        end
+    end
+    return nil
+end
+
+local ShootRemote = FindShootRemote()
+if ShootRemote then
+    local mt = getrawmetatable(game)
+    setreadonly(mt, false)
+    local oldNamecall = mt.__namecall
+    mt.__namecall = function(self, ...)
+        local method = getnamecallmethod()
+        local args = {...}
+        
+        if method == "FireServer" and self == ShootRemote and Config.SilentAim.Enabled then
+            local Target = GetClosestPlayer()
+            if Target and Target.Character and Target.Character:FindFirstChild(Config.SilentAim.TargetPart) then
+                local TargetPos = Target.Character[Config.SilentAim.TargetPart].Position
+                local Dir = (TargetPos - LocalPlayer.Character.Head.Position).Unit
+                args[#args] = Dir
+                return oldNamecall(self, unpack(args))
+            end
+        end
+        
+        return oldNamecall(self, ...)
+    end
+    setreadonly(mt, true)
+end
+
+-- ============================================
+-- МОДУЛЬ 5: ANTI AIM
+-- ============================================
+RunService.RenderStepped:Connect(function()
+    if Config.AntiAim.Enabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local Root = LocalPlayer.Character.HumanoidRootPart
+        Root.Orientation = Vector3.new(Config.AntiAim.Pitch, Root.Orientation.Y + Config.AntiAim.Yaw, 0)
+    end
+end)
+
+-- ============================================
+-- МОДУЛЬ 6: REMOTE SPY
+-- ============================================
+local function EnableRemoteSpy()
+    local mt = getrawmetatable(game)
+    setreadonly(mt, false)
+    local oldNamecall = mt.__namecall
+    mt.__namecall = function(self, ...)
+        local method = getnamecallmethod()
+        if method == "FireServer" and (self:IsA("RemoteEvent") or self:IsA("RemoteFunction")) then
+            print("[REMOTE SPY] Fired:", self:GetFullName())
+            for i = 1, select('#', ...) do
+                print("  Arg" .. i .. ":", select(i, ...))
+            end
+        end
+        return oldNamecall(self, ...)
+    end
+    setreadonly(mt, true)
+    print("[+] Remote Spy enabled")
+end
+
+-- ============================================
+-- МОДУЛЬ 7: FIND ECONOMY REMOTES
+-- ============================================
+local function FindEconomyRemotes()
+    local EconomyRemotes = {}
+    for _, Service in pairs(game:GetChildren()) do
+        for _, obj in pairs(Service:GetDescendants()) do
+            if obj:IsA("RemoteEvent") or obj:IsA("RemoteFunction") then
+                local n = obj.Name:lower()
+                if n:find("money") or n:find("cash") or n:find("buy") or n:find("purchase") or
+                   n:find("shop") or n:find("upgrade") or n:find("currency") or n:find("give") or
+                   n:find("trade") or n:find("sell") or n:find("skin") or n:find("cosmetic") then
+                    table.insert(EconomyRemotes, obj)
+                end
+            end
+        end
+    end
+    return EconomyRemotes
+end
+
+-- ============================================
+-- МОДУЛЬ 8: ANTICHEAT BYPASS
+-- ============================================
+local function BypassAnticheat()
+    -- Hyperion / BYSON bypass attempt
+    pcall(function()
+        local mt = getrawmetatable(game)
+        setreadonly(mt, false)
+        local oldIndex = mt.__index
+        mt.__index = function(self, key)
+            if key == "detectInjector" or key == "isExploit" or key == "isRunning" then
+                return function() return false end
+            end
+            return oldIndex(self, key)
+        end
+        setreadonly(mt, true)
+    end)
+    
+    -- Блокировка HTTP к античиту
+    pcall(function()
+        local oldRequest = syn.request or http_request or request
+        if oldRequest then
+            syn.request = function(...)
+                local args = {...}
+                if type(args) == "table" and args.Url then
+                    if args.Url:lower():find("anticheat") or args.Url:lower():find("ban") or args.Url:lower():find("analytics") then
+                        return { StatusCode = 200, Body = "{}", Headers = {} }
+                    end
+                end
+                return oldRequest(...)
+            end
+        end
+    end)
+    
+    print("[+] Anticheat bypass attempted")
+end
+
+-- ============================================
+-- МОДУЛЬ 9: SKIN CHANGER
+-- ============================================
+local SkinChanger = {}
+local CurrentSkin = nil
+local OriginalAccessories = {}
+
+SkinChanger.AvailableSkins = {
+    ["AK-47"] = {
+        { Name = "Dragon Lore", AssetId = 0, Rarity = "Legendary" },
+        { Name = "Fire Serpent", AssetId = 0, Rarity = "Mythic" },
+        { Name = "Vulcan", AssetId = 0, Rarity = "Epic" },
+        { Name = "Redline", AssetId = 0, Rarity = "Rare" },
+        { Name = "Default", AssetId = 0, Rarity = "Common" }
+    },
+    ["M4A1"] = {
+        { Name = "Dragon King", AssetId = 0, Rarity = "Legendary" },
+        { Name = "Howl", AssetId = 0, Rarity = "Mythic" },
+        { Name = "Neo-Noir", AssetId = 0, Rarity = "Epic" },
+        { Name = "Decimator", AssetId = 0, Rarity = "Rare" },
+        { Name = "Default", AssetId = 0, Rarity = "Common" }
+    },
+    ["AWP"] = {
+        { Name = "Dragon Lore (AWP)", AssetId = 0, Rarity = "Legendary" },
+        { Name = "Medusa", AssetId = 0, Rarity = "Mythic" },
+        { Name = "Oni Taiji", AssetId = 0, Rarity = "Epic" },
+        { Name = "Electric Hive", AssetId = 0, Rarity = "Rare" },
+        { Name = "Default", AssetId = 0, Rarity = "Common" }
+    },
+    ["Desert Eagle"] = {
+        { Name = "Blaze", AssetId = 0, Rarity = "Legendary" },
+        { Name = "Printstream", AssetId = 0, Rarity = "Mythic" },
+        { Name = "Code Red", AssetId = 0, Rarity = "Epic" },
+        { Name = "Conspiracy", AssetId = 0, Rarity = "Rare" },
+        { Name = "Default", AssetId = 0, Rarity = "Common" }
+    },
+    ["Knife"] = {
+        { Name = "Karambit Fade", AssetId = 0, Rarity = "Legendary" },
+        { Name = "Butterfly Fade", AssetId = 0, Rarity = "Mythic" },
+        { Name = "M9 Bayonet", AssetId = 0, Rarity = "Epic" },
+        { Name = "Flip Knife", AssetId = 0, Rarity = "Rare" },
+        { Name = "Default", AssetId = 0, Rarity = "Common" }
+    }
+}
+
+local function ApplySkinToTool(Tool)
+    if not Tool or not Tool:IsA("Tool") then return end
+    
+    -- Сохраняем оригинал
+    if not OriginalAccessories[Tool] then
+        local Handle = Tool:FindFirstChild("Handle")
+        if Handle then
+            OriginalAccessories[Tool] = {
+                Color = Handle.Color or Color3.new(1,1,1),
+                Material = Handle.Material or Enum.Material.Plastic,
+                Transparency = Handle.Transparency or 0
+            }
+        end
+    end
+    
+    -- Применяем Highlight
+    local Highlight = Tool:FindFirstChild("SkinHL")
+    if not Highlight then
+        Highlight = Instance.new("Highlight")
+        Highlight.Name = "SkinHL"
+        Highlight.FillColor = Color3.fromRGB(255, 215, 0)
+        Highlight.FillTransparency = 0.6
+        Highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+        Highlight.OutlineTransparency = 0.8
+        Highlight.Parent = Tool
+    end
+    Highlight.Enabled = true
+    
+    -- Меняем цвет Handle
+    local Handle = Tool:FindFirstChild("Handle")
+    if Handle then
+        Handle.Color = Color3.fromRGB(255, 200, 50)
+        Handle.Material = Enum.Material.ForceField
+    end
+    
+    -- Меняем все MeshPart
+    for _, child in pairs(Tool:GetDescendants()) do
+        if child:IsA("MeshPart") then
+            child.Color = Color3.fromRGB(255, 200, 50)
+            child.Material = Enum.Material.ForceField
+        end
+    end
+end
+
+function SkinChanger.ApplySkin(WeaponCategory, SkinData)
+    if not WeaponCategory or not SkinData then return end
+    CurrentSkin = SkinData
+    
+    -- Применяем к текущему оружию
+    if LocalPlayer.Character then
+        for _, Tool in pairs(LocalPlayer.Character:GetChildren()) do
+            if Tool:IsA("Tool") then
+                ApplySkinToTool(Tool)
+            end
+        end
+    end
+    
+    -- Применяем к инвентарю
+    local Backpack = LocalPlayer:FindFirstChild("Backpack")
+    if Backpack then
+        for _, Tool in pairs(Backpack:GetChildren()) do
+            if Tool:IsA("Tool") then
+                ApplySkinToTool(Tool)
+            end
+        end
+    end
+    
+    -- Пробуем найти и эксплуатировать RemoteEvent скина
+    local SkinRemote = nil
+    for _, obj in pairs(game:GetService("ReplicatedStorage"):GetDescendants()) do
+        if obj:IsA("RemoteEvent") then
+            local n = obj.Name:lower()
+            if n:find("skin") or n:find("equip") or n:find("cosmetic") or n:find("apply") then
+                SkinRemote = obj
                 break
             end
         end
     end
+    
+    if SkinRemote then
+        pcall(function()
+            SkinRemote:FireServer(SkinData.Name, SkinData.AssetId)
+        end)
+        pcall(function()
+            SkinRemote:FireServer(WeaponCategory, SkinData.Name)
+        end)
+        pcall(function()
+            SkinRemote:FireServer(LocalPlayer.UserId, SkinData.AssetId)
+        end)
+    end
+    
+    print("[SkinChanger] Applied:", SkinData.Name)
 end
 
-FarmTab:CreateToggle({
-    Name = "Авто-квесты (брать задания)",
-    CurrentValue = false,
-    Callback = function(v)
-        Toggles.AutoQuest = v
-        if v then
-            task.spawn(function()
-                while Toggles.AutoQuest do
-                    takeQuest()
-                    task.wait(5)
-                end
-            end)
-        end
-    end
-})
-
--- ==================== АВТО-БОССЫ ====================
-
-local function findClosestBoss()
-    local hrp = getHRP()
-    if not hrp then return nil end
-    local closest, dist = nil, math.huge
-    for _, v in pairs(workspace:GetDescendants()) do
-        if v:IsA("Model") and v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
-            if string.find(v.Name, "Boss") or string.find(v.Name, "Ship") or string.find(v.Name, "Factory") then
-                local d = (v.HumanoidRootPart.Position - hrp.Position).magnitude
-                if d < dist then
-                    dist = d
-                    closest = v
+function SkinChanger.ResetSkin()
+    if LocalPlayer.Character then
+        for _, Tool in pairs(LocalPlayer.Character:GetChildren()) do
+            if Tool:IsA("Tool") then
+                local hl = Tool:FindFirstChild("SkinHL")
+                if hl then hl:Destroy() end
+                
+                local Handle = Tool:FindFirstChild("Handle")
+                if Handle and OriginalAccessories[Tool] then
+                    Handle.Color = OriginalAccessories[Tool].Color
+                    Handle.Material = OriginalAccessories[Tool].Material
+                    Handle.Transparency = OriginalAccessories[Tool].Transparency
                 end
             end
         end
     end
-    return closest
+    
+    local Backpack = LocalPlayer:FindFirstChild("Backpack")
+    if Backpack then
+        for _, Tool in pairs(Backpack:GetChildren()) do
+            if Tool:IsA("Tool") then
+                local hl = Tool:FindFirstChild("SkinHL")
+                if hl then hl:Destroy() end
+                
+                local Handle = Tool:FindFirstChild("Handle")
+                if Handle and OriginalAccessories[Tool] then
+                    Handle.Color = OriginalAccessories[Tool].Color
+                    Handle.Material = OriginalAccessories[Tool].Material
+                    Handle.Transparency = OriginalAccessories[Tool].Transparency
+                end
+            end
+        end
+    end
+    
+    OriginalAccessories = {}
+    CurrentSkin = nil
+    print("[SkinChanger] Reset")
 end
 
-FarmTab:CreateToggle({
-    Name = "Авто-боссы",
-    CurrentValue = false,
-    Callback = function(v)
-        Toggles.AutoBoss = v
-        if v then
-            task.spawn(function()
-                while Toggles.AutoBoss do
-                    local boss = findClosestBoss()
-                    if boss then
-                        local hrp = getHRP()
-                        if hrp then
-                            hrp.CFrame = boss.HumanoidRootPart.CFrame * CFrame.new(0, 10, 0)
-                            -- Атакуем
-                            VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 1)
-                            task.wait(0.1)
-                            VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 1)
-                        end
-                    end
-                    task.wait(0.5)
-                end
-            end)
-        end
-    end
-})
-
--- ==================== СНАЙПЕР ФРУКТОВ ====================
-
-local function buyFruit()
-    -- Пытаемся купить фрукт у продавца (обычно Dealer)
-    local success, result = pcall(function()
-        return RemoteInvoke("PurchaseFruit", "Dealer")
-    end)
-    if success then
-        Rayfield:Notify({
-            Title = "Снайпер фруктов",
-            Content = "Фрукт куплен!",
-            Duration = 3
-        })
-    end
-end
-
-FarmTab:CreateToggle({
-    Name = "Снайпер фруктов (покупка у Dealer)",
-    CurrentValue = false,
-    Callback = function(v)
-        Toggles.FruitSniper = v
-        if v then
-            task.spawn(function()
-                while Toggles.FruitSniper do
-                    buyFruit()
-                    task.wait(1)
-                end
-            end)
-        end
-    end
-})
-
--- ==================== KILL AURA ====================
-
-local function killAuraLoop()
-    while Toggles.KillAura do
-        local hrp = getHRP()
-        if hrp then
-            for _, mob in pairs(workspace.Enemies:GetChildren()) do
-                if mob:FindFirstChild("HumanoidRootPart") and mob:FindFirstChild("Humanoid") and mob.Humanoid.Health > 0 then
-                    local dist = (mob.HumanoidRootPart.Position - hrp.Position).magnitude
-                    if dist <= Sliders.KillAuraRadius then
-                        -- Наносим урон (например, телепортируем к мобу и бьём)
-                        hrp.CFrame = mob.HumanoidRootPart.CFrame * CFrame.new(0, 5, 0)
-                        VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 1)
-                        task.wait(0.05)
-                        VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 1)
-                    end
-                end
+-- Авто-применение при спавне
+LocalPlayer.CharacterAdded:Connect(function()
+    if CurrentSkin then
+        task.wait(2)
+        for _, Tool in pairs(LocalPlayer.Character:GetChildren()) do
+            if Tool:IsA("Tool") then
+                ApplySkinToTool(Tool)
             end
         end
-        task.wait(0.1)
-    end
-end
-
-CombatTab:CreateToggle({
-    Name = "Kill Aura",
-    CurrentValue = false,
-    Callback = function(v)
-        Toggles.KillAura = v
-        if v then
-            task.spawn(killAuraLoop)
-        end
-    end
-})
-
-CombatTab:CreateSlider({
-    Name = "Радиус Kill Aura",
-    Range = {10, 50},
-    Increment = 5,
-    CurrentValue = Sliders.KillAuraRadius,
-    Callback = function(v) Sliders.KillAuraRadius = v end
-})
-
--- ==================== NOCLIP ====================
-
-MovementTab:CreateToggle({
-    Name = "Noclip (проход сквозь стены)",
-    CurrentValue = false,
-    Callback = function(v)
-        Toggles.Noclip = v
-        if v then
-            Connections.Noclip = RunService.Stepped:Connect(function()
-                local char = getChar()
-                if char then
-                    for _, part in pairs(char:GetDescendants()) do
-                        if part:IsA("BasePart") then
-                            part.CanCollide = false
-                        end
-                    end
-                end
-            end)
-        else
-            if Connections.Noclip then
-                Connections.Noclip:Disconnect()
-                Connections.Noclip = nil
-            end
-        end
-    end
-})
-
--- ==================== FLY ====================
-
-local flyConnection = nil
-local flyBodyVelocity = nil
-
-MovementTab:CreateToggle({
-    Name = "Fly (полёт)",
-    CurrentValue = false,
-    Callback = function(v)
-        Toggles.Fly = v
-        local hrp = getHRP()
-        if not hrp then return end
-        if v then
-            -- Создаём BodyVelocity
-            flyBodyVelocity = Instance.new("BodyVelocity")
-            flyBodyVelocity.Velocity = Vector3.new(0,0,0)
-            flyBodyVelocity.MaxForce = Vector3.new(4000,4000,4000)
-            flyBodyVelocity.Parent = hrp
-            flyConnection = RunService.Heartbeat:Connect(function()
-                if not Toggles.Fly then return end
-                local moveDir = Vector3.new(0,0,0)
-                if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + Camera.CFrame.LookVector end
-                if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - Camera.CFrame.LookVector end
-                if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - Camera.CFrame.RightVector end
-                if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + Camera.CFrame.RightVector end
-                if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDir = moveDir + Vector3.new(0,1,0) end
-                if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then moveDir = moveDir - Vector3.new(0,1,0) end
-                if moveDir.magnitude > 0 then
-                    flyBodyVelocity.Velocity = moveDir.unit * Sliders.FlySpeed
-                else
-                    flyBodyVelocity.Velocity = Vector3.new(0,0,0)
-                end
-            end)
-        else
-            if flyConnection then
-                flyConnection:Disconnect()
-                flyConnection = nil
-            end
-            if flyBodyVelocity then
-                flyBodyVelocity:Destroy()
-                flyBodyVelocity = nil
-            end
-        end
-    end
-})
-
-MovementTab:CreateSlider({
-    Name = "Скорость полёта",
-    Range = {20, 200},
-    Increment = 10,
-    CurrentValue = Sliders.FlySpeed,
-    Callback = function(v) Sliders.FlySpeed = v end
-})
-
--- ==================== ESP ====================
-
-local function createESP(obj, color, text)
-    if not obj or not obj.Parent then return end
-    local highlight = Instance.new("Highlight")
-    highlight.FillColor = color
-    highlight.OutlineColor = Color3.new(1,1,1)
-    highlight.FillTransparency = 0.5
-    highlight.Adornee = obj
-    highlight.Parent = obj
-    ESPObjects[obj] = highlight
-end
-
-local function updateESP()
-    for _, v in pairs(ESPObjects) do
-        if v and v.Adornee and v.Adornee.Parent then
-            -- already exists
-        else
-            if v then v:Destroy() end
-            ESPObjects[_] = nil
-        end
-    end
-    if Toggles.ESPPlayers then
-        for _, player in pairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer and player.Character and not ESPObjects[player.Character] then
-                createESP(player.Character, Color3.new(1,0,0), player.Name)
-            end
-        end
-    end
-    if Toggles.ESPMobs then
-        for _, mob in pairs(workspace.Enemies:GetChildren()) do
-            if not ESPObjects[mob] then
-                createESP(mob, Color3.new(1,1,0), "Mob")
-            end
-        end
-    end
-    -- фрукты и сундуки можно добавить по аналогии
-end
-
-VisualsTab:CreateToggle({
-    Name = "ESP игроков",
-    CurrentValue = false,
-    Callback = function(v)
-        Toggles.ESPPlayers = v
-        if not v then
-            for k, v in pairs(ESPObjects) do
-                if v then v:Destroy() end
-            end
-            ESPObjects = {}
-        end
-    end
-})
-
-VisualsTab:CreateToggle({
-    Name = "ESP мобов",
-    CurrentValue = false,
-    Callback = function(v)
-        Toggles.ESPMobs = v
-        if not v then
-            for k, v in pairs(ESPObjects) do
-                if v then v:Destroy() end
-            end
-            ESPObjects = {}
-        end
-    end
-})
-
-task.spawn(function()
-    while true do
-        updateESP()
-        task.wait(1)
     end
 end)
 
--- ==================== ТЕЛЕПОРТЫ ====================
+-- ============================================
+-- ПРИМЕНЕНИЕ FOV
+-- ============================================
+RunService.RenderStepped:Connect(function()
+    if Config.Misc.FOVChanger then
+        Camera.FieldOfView = Config.Misc.FOVAmount
+    end
+end)
 
-local teleportLocations = {
-    ["Первое море (спавн)"] = CFrame.new(-384, 73, 95),
-    ["Второе море (спавн)"] = CFrame.new(-1320, 73, 95),
-    ["Третье море (спавн)"] = CFrame.new(-5075, 314, -2555),
-    ["Колизей"] = CFrame.new(-1848, 23, -2709),
-    ["Тюрьма"] = CFrame.new(4850, 5, 730),
-    ["Замок"] = CFrame.new(-5500, 300, -5500),
-    ["Фабрика"] = CFrame.new(495, 73, -1350),
-    ["Гора"] = CFrame.new(-2369, 317, -10300)
-}
+-- ============================================
+-- GUI: TAB 1 - AIM
+-- ============================================
+Tab1:CreateToggle("Aimbot", false, function(v) Config.AimBot.Enabled = v end)
+Tab1:CreateSlider("FOV", 10, 360, 120, function(v) Config.AimBot.FOV = v end)
+Tab1:CreateSlider("Smoothness", 0.05, 1, 0.25, function(v) Config.AimBot.Smoothness = v end)
+Tab1:CreateDropdown("Target Part", {"Head", "Torso", "HumanoidRootPart"}, "Head", function(v) Config.AimBot.TargetPart = v end)
+Tab1:CreateToggle("Team Check", true, function(v) Config.AimBot.TeamCheck = v end)
+Tab1:CreateToggle("Silent Aim", false, function(v) Config.SilentAim.Enabled = v end)
+Tab1:CreateToggle("Triggerbot", false, function(v) Config.TriggerBot.Enabled = v end)
+Tab1:CreateSlider("Trigger Distance", 10, 500, 200, function(v) Config.TriggerBot.Distance = v end)
 
-TeleportTab:CreateDropdown({
-    Name = "Выбери локацию",
-    Options = {"Первое море (спавн)", "Второе море (спавн)", "Третье море (спавн)", "Колизей", "Тюрьма", "Замок", "Фабрика", "Гора"},
-    CurrentOption = {""},
-    Callback = function(option)
-        local cf = teleportLocations[option]
-        if cf then
-            local hrp = getHRP()
-            if hrp then
-                hrp.CFrame = cf
+-- ============================================
+-- GUI: TAB 2 - VISUALS
+-- ============================================
+Tab2:CreateToggle("ESP Enabled", true, function(v) Config.ESP.Enabled = v end)
+Tab2:CreateToggle("Box ESP", false, function(v) Config.ESP.Box = v end)
+Tab2:CreateToggle("Health Bar", false, function(v) Config.ESP.Health = v end)
+Tab2:CreateToggle("Name Tags", false, function(v) Config.ESP.Name = v end)
+Tab2:CreateToggle("Tracers", false, function(v) Config.ESP.Tracer = v end)
+Tab2:CreateToggle("Team Check", true, function(v) Config.ESP.TeamCheck = v end)
+
+-- ============================================
+-- GUI: TAB 3 - MISC
+-- ============================================
+Tab3:CreateToggle("FOV Changer", false, function(v) Config.Misc.FOVChanger = v end)
+Tab3:CreateSlider("FOV Amount", 30, 120, 90, function(v) Config.Misc.FOVAmount = v end)
+Tab3:CreateToggle("Anti-Aim", false, function(v) Config.AntiAim.Enabled = v end)
+Tab3:CreateSlider("Pitch", -90, 90, -89, function(v) Config.AntiAim.Pitch = v end)
+Tab3:CreateSlider("Yaw", -180, 180, 180, function(v) Config.AntiAim.Yaw = v end)
+
+-- ============================================
+-- GUI: TAB 4 - EXPLOITS
+-- ============================================
+Tab4:CreateButton("Enable Remote Spy", function() EnableRemoteSpy() end)
+Tab4:CreateButton("Find Economy Remotes", function()
+    local Remotes = FindEconomyRemotes()
+    for _, r in pairs(Remotes) do
+        print("[ECONOMY]", r:GetFullName())
+    end
+    warn("Found " .. #Remotes .. " potential economy remotes")
+end)
+Tab4:CreateButton("Bypass Anticheat", function() BypassAnticheat() end)
+
+-- ============================================
+-- GUI: TAB 5 - SKINS
+-- ============================================
+local SelectedWeapon = "AK-47"
+local SelectedSkinIndex = 1
+
+Tab5:CreateDropdown("Weapon", {"AK-47", "M4A1", "AWP", "Desert Eagle", "Knife"}, "AK-47", function(v)
+    SelectedWeapon = v
+    SelectedSkinIndex = 1
+end)
+
+Tab5:CreateDropdown("Skin", {"Dragon Lore", "Fire Serpent", "Vulcan", "Redline", "Default"}, "Dragon Lore", function(v)
+    local Skins = SkinChanger.AvailableSkins[SelectedWeapon]
+    if Skins then
+        for i, s in pairs(Skins) do
+            if s.Name == v then
+                SelectedSkinIndex = i
+                break
             end
         end
-    end,
-    MultipleOptions = false
-})
-
--- ==================== АВТО-СТАТЫ ====================
-
-local function addStats()
-    while Toggles.AutoStats do
-        local points = LocalPlayer.PlayerGui.Main.PlayerStats.Points.Text
-        points = tonumber(points)
-        if points and points > 0 then
-            local stats = {"Melee", "Defense", "Sword", "Gun", "DevilFruit"}
-            for _, stat in pairs(stats) do
-                RemoteInvoke("AddPoint", stat, 1)
-                task.wait(0.1)
-            end
-        end
-        task.wait(1)
     end
-end
+end)
 
-StatsTab:CreateToggle({
-    Name = "Авто-статы (равномерно)",
-    CurrentValue = false,
-    Callback = function(v)
-        Toggles.AutoStats = v
-        if v then
-            task.spawn(addStats)
-        end
+Tab5:CreateButton("Apply Skin", function()
+    local Skins = SkinChanger.AvailableSkins[SelectedWeapon]
+    if Skins and Skins[SelectedSkinIndex] then
+        SkinChanger.ApplySkin(SelectedWeapon, Skins[SelectedSkinIndex])
     end
-})
+end)
 
--- ==================== АНТИ-КИК ====================
+Tab5:CreateButton("Reset Skin", function()
+    SkinChanger.ResetSkin()
+end)
 
-MiscTab:CreateToggle({
-    Name = "Анти-кик (имитация активности)",
-    CurrentValue = false,
-    Callback = function(v)
-        Toggles.AntiKick = v
-        if v then
-            local VirtualUser = game:GetService("VirtualUser")
-            LocalPlayer.Idled:Connect(function()
-                VirtualUser:CaptureController()
-                VirtualUser:ClickButton2(Vector2.new())
-            end)
-        end
-    end
-})
-
--- ==================== КНОПКА РЕСПАВНА ====================
-
-MiscTab:CreateButton({
-    Name = "Респавн (самоубийство)",
-    Callback = function()
-        local char = getChar()
-        if char then
-            char:BreakJoints()
-        end
-    end
-})
-
--- ==================== ЗАВЕРШЕНИЕ ====================
-
-Rayfield:Notify({
-    Title = "Apex Dominion Hub",
-    Content = "Все функции загружены. Приятной игры!",
-    Duration = 5
-})
-
-print("Apex Dominion Hub v2026 успешно загружен!")
+-- ============================================
+-- ЗАВЕРШЕНИЕ ЗАГРУЗКИ
+-- ============================================
+print("=" .. string.rep("=", 65) .. "=")
+print("  BLOX STRIKE - COMPLETE PENETRATION TEST SUITE v2.0 LOADED")
+print("  Aimbot | ESP | Triggerbot | Silent Aim | Anti-Aim")
+print("  Remote Spy | Economy Exploits | Anticheat Bypass | Skin Changer")
+print("  ТОЛЬКО ДЛЯ АВТОРИЗОВАННОГО ТЕСТИРОВАНИЯ")
+print("=" .. string.rep("=", 65) .. "=")
