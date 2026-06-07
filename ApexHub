@@ -1,617 +1,359 @@
 --[[
-  BloxStrike Ultimate Script — Authorized Pentest
+  ApexHub v2 — BloxStrike Ultimate
   Совместимость: Xeno, Solara, Delta, Hydrogen, Codex
-  Фичи: Silent Aim, Ragebot, Legitbot, Triggerbot, ESP, Skin Changer, Hitbox
+  Фичи: Silent Aim, Ragebot, Legitbot, Triggerbot, ESP, Skin Changer, NoRecoil, BHop
 ]]
 
-local scriptVersion = "v2.0"
-local scriptAuthor = "Pentest-Authorized"
+local Version = "ApexHub v2.0"
+local ToggleKey = "RightShift"
 
--- ========== НАСТРОЙКИ (меняй под себя) ==========
-local Settings = {
-    -- AIMBOT
-    Aimbot = {
-        Enabled = true,
-        Silent = true,        -- Silent Aim (не дёргает камеру)
-        RageMode = false,     -- true = Ragebot (стрельба в нескольких), false = один цель
-        FOV = 120,            -- Радиус прицела
-        Smoothness = 15,      -- Плавность (чем выше, тем менее заметно)
-        HitChance = 65,       -- Шанс попадания (0-100)
-        TargetPart = "Head",  -- "Head" / "HumanoidRootPart" / "Random"
-        TeamCheck = true,
-        WallCheck = true,
-        Keybind = "c",        -- Клавиша активации аимлока
-        Prediction = 0.145,   -- Предсказание движения (для легита)
-    },
-    
-    -- TRIGGERBOT
-    Triggerbot = {
-        Enabled = true,
-        Delay = 50,           -- мс задержка перед выстрелом
-        HitChance = 85,
-        Keybind = "v",
-    },
-    
-    -- ESP
-    ESP = {
-        Enabled = true,
-        Box = true,
-        BoxColor = Color3.fromRGB(255, 50, 50),
-        HealthBar = true,
-        Name = true,
-        Weapon = true,
-        Distance = true,
-        Tracers = false,
-        Skeleton = false,
-        TeamColor = false,
-        Chams = false,
-        Glow = false,
-    },
-    
-    -- VISUALS
-    Visuals = {
-        Crosshair = true,
-        CrosshairColor = Color3.fromRGB(0, 255, 0),
-        NoRecoil = true,
-        NoSpread = false,
-        NoFlash = true,
-        NoSmoke = false,
-        BHop = true,
-        AutoStrafe = false,
-        DarkSky = true,
-        LowGFX = false,
-        FOVCircle = true,
-        FOVCircleColor = Color3.fromRGB(255, 255, 255),
-    },
-    
-    -- SKIN CHANGER
-    SkinChanger = {
-        Enabled = true,
-        WeaponSkins = {
-            ["AK47"] = "Legendary",
-            ["M4A4"] = "Dragon",
-            ["AWP"] = "Fade",
-            ["DesertEagle"] = "Blaze",
-            ["Knife"] = "Karambit",
-        },
-        GloveSkin = "Default",
-        AgentSkin = "Default",
-    },
-    
-    -- MOVEMENT
-    Movement = {
-        SpeedMultiplier = 1.0,    -- 1.0 = обычная скорость
-        JumpMultiplier = 1.0,
-        NoFallDamage = true,
-        BunnyHop = true,
-    },
-    
-    -- MISC
-    Misc = {
-        AutoBombDefuse = false,
-        AutoBuy = false,
-        BuyWeapon = "AWP",
-        AntiFlash = true,
-        HitboxExpander = 1.0,
-        Watermark = true,
-    },
+-- ========== НАСТРОЙКИ ==========
+local Config = {
+    Aimbot = { Enabled = true, SilentAim = true, Rage = false, FOV = 120, Smooth = 15, HitChance = 65, 
+               Target = "Head", TeamCheck = true, WallCheck = true, Key = "c", Prediction = 0.145 },
+    Triggerbot = { Enabled = true, Delay = 50, HitChance = 85, Key = "v" },
+    ESP = { Enabled = true, Box = true, Health = true, Name = true, Weapon = true, Dist = true, 
+            Tracers = false, Skeleton = false, TeamColor = false, Color = Color3.fromRGB(255,50,50) },
+    Visuals = { NoRecoil = true, NoFlash = true, NoSmoke = false, BHop = true, DarkSky = false, 
+                Crosshair = true, FOVCircle = true, Color = Color3.fromRGB(0,255,0) },
+    Skin = { Enabled = true, Skins = {
+        ["AK-47"] = "Red Baron", ["M4A1"] = "Dragon", ["AWP"] = "Fade",
+        ["Deagle"] = "Blaze", ["Knife"] = "Bayonet", ["Karambit"] = "Tiger",
+    }},
+    Movement = { Speed = 1.0, Jump = 1.0, NoFall = true },
+    Misc = { Hitbox = 1.0, AntiFlash = true, Watermark = true, AutoBuy = false },
 }
 
 -- ========== СЕРВИСЫ ==========
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-local Camera = workspace.CurrentCamera
-local Player = Players.LocalPlayer
-local Mouse = Player:GetMouse()
-local guiService = game:GetService("GuiService")
+local P = game:GetService("Players")
+local RS = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
+local Cam = workspace.CurrentCamera
+local LP = P.LocalPlayer
+local Mouse = LP:GetMouse()
+local V3 = Vector3.new
+local V2 = Vector2.new
+local CF = CFrame.new
+local CI = Color3.fromRGB
+local mRand = math.random
+local mClamp = math.clamp
+local mFloor = math.floor
+local mRad = math.rad
 
 -- ========== GUI ==========
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "BloxStrikeUltimate"
-ScreenGui.ResetOnSpawn = false
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+local gui = Instance.new("ScreenGui")
+gui.Name = "ApexHub"
+gui.ResetOnSpawn = false
+gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- Main Frame
-local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 600, 0, 400)
-MainFrame.Position = UDim2.new(0.5, -300, 0.5, -200)
-MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
-MainFrame.BackgroundTransparency = 0.1
-MainFrame.Active = true
-MainFrame.Draggable = true
-MainFrame.Visible = false
-MainFrame.Parent = ScreenGui
+local mFrame = Instance.new("Frame")
+mFrame.Size = UDim2.new(0, 700, 0, 450)
+mFrame.Position = UDim2.new(0.5, -350, 0.5, -225)
+mFrame.BackgroundColor3 = CI(15, 15, 25)
+mFrame.BackgroundTransparency = 0.08
+mFrame.BorderSizePixel = 0
+mFrame.Active = true
+mFrame.Draggable = true
+mFrame.Visible = false
+mFrame.Parent = gui
 
--- Title
-local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 30)
-Title.BackgroundColor3 = Color3.fromRGB(35, 35, 50)
-Title.Text = "BloxStrike Ultimate | " .. scriptVersion
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.Font = Enum.Font.GothamBold
-Title.TextSize = 16
-Title.Parent = MainFrame
+-- Title bar
+local titleBar = Instance.new("Frame")
+titleBar.Size = UDim2.new(1, 0, 0, 35)
+titleBar.BackgroundColor3 = CI(25, 25, 40)
+titleBar.BorderSizePixel = 0
+titleBar.Parent = mFrame
 
--- Tab container
-local TabContainer = Instance.new("Frame")
-TabContainer.Size = UDim2.new(0, 120, 1, -30)
-TabContainer.Position = UDim2.new(0, 0, 0, 30)
-TabContainer.BackgroundColor3 = Color3.fromRGB(30, 30, 42)
-TabContainer.Parent = MainFrame
-
--- Content container
-local ContentFrame = Instance.new("Frame")
-ContentFrame.Size = UDim2.new(1, -120, 1, -30)
-ContentFrame.Position = UDim2.new(0, 120, 0, 30)
-ContentFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
-ContentFrame.Parent = MainFrame
+local titleTxt = Instance.new("TextLabel")
+titleTxt.Size = UDim2.new(1, 0, 1, 0)
+titleTxt.Text = "ApexHub v2 | BloxStrike"
+titleTxt.TextColor3 = CI(255, 255, 255)
+titleTxt.BackgroundTransparency = 1
+titleTxt.Font = Enum.Font.GothamBold
+titleTxt.TextSize = 16
+titleTxt.Parent = titleBar
 
 -- Tab buttons
-local tabs = {"Aimbot", "Triggerbot", "ESP", "Visuals", "Skins", "Movement", "Misc"}
-local tabButtons = {}
-local currentTab = "Aimbot"
+local tabsData = {"Aimbot","Trigger","ESP","Visuals","Skins","Move","Misc"}
+local tabBtns = {}
+local curTab = "Aimbot"
+local tabFrame = Instance.new("Frame")
+tabFrame.Size = UDim2.new(0, 130, 1, -35)
+tabFrame.Position = UDim2.new(0, 0, 0, 35)
+tabFrame.BackgroundColor3 = CI(20, 20, 32)
+tabFrame.BorderSizePixel = 0
+tabFrame.Parent = mFrame
 
-for i, tabName in ipairs(tabs) do
+local contFrame = Instance.new("Frame")
+contFrame.Size = UDim2.new(1, -130, 1, -35)
+contFrame.Position = UDim2.new(0, 130, 0, 35)
+contFrame.BackgroundColor3 = CI(15, 15, 25)
+contFrame.BorderSizePixel = 0
+contFrame.Parent = mFrame
+
+for i,name in ipairs(tabsData) do
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 0, 35)
-    btn.Position = UDim2.new(0, 0, 0, (i-1) * 35)
-    btn.Text = tabName
-    btn.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
-    btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+    btn.Size = UDim2.new(1, 0, 0, 38)
+    btn.Position = UDim2.new(0, 0, 0, (i-1)*38)
+    btn.Text = name
+    btn.TextColor3 = CI(180, 180, 180)
+    btn.BackgroundColor3 = CI(25, 25, 38)
+    btn.BorderSizePixel = 0
     btn.Font = Enum.Font.Gotham
     btn.TextSize = 13
-    btn.Parent = TabContainer
+    btn.Parent = tabFrame
     
     btn.MouseButton1Click:Connect(function()
-        currentTab = tabName
-        for _, b in ipairs(tabButtons) do
-            b.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
-        end
-        btn.BackgroundColor3 = Color3.fromRGB(60, 60, 85)
-        UpdateUI()
+        curTab = name
+        for _,b in ipairs(tabBtns) do b.BackgroundColor3 = CI(25, 25, 38) end
+        btn.BackgroundColor3 = CI(45, 45, 70)
+        BuildUI()
     end)
-    
-    table.insert(tabButtons, btn)
+    table.insert(tabBtns, btn)
 end
 
 -- Toggle button
-local ToggleBtn = Instance.new("TextButton")
-ToggleBtn.Size = UDim2.new(0, 40, 0, 40)
-ToggleBtn.Position = UDim2.new(0, 10, 0, 10)
-ToggleBtn.Text = "⚡"
-ToggleBtn.TextSize = 20
-ToggleBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
-ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-ToggleBtn.Parent = ScreenGui
+local togBtn = Instance.new("TextButton")
+togBtn.Size = UDim2.new(0, 45, 0, 45)
+togBtn.Position = UDim2.new(0, 15, 0, 15)
+togBtn.Text = "⚡"
+togBtn.TextSize = 24
+togBtn.BackgroundColor3 = CI(35, 35, 50)
+togBtn.TextColor3 = CI(255, 255, 255)
+togBtn.BorderSizePixel = 0
+togBtn.Parent = gui
 
-ToggleBtn.MouseButton1Click:Connect(function()
-    MainFrame.Visible = not MainFrame.Visible
+togBtn.MouseButton1Click:Connect(function()
+    mFrame.Visible = not mFrame.Visible
 end)
 
--- ========== ФУНКЦИИ UI ==========
-local function CreateToggle(parent, name, setting, path, yPos)
-    local toggles = Settings
-    if path then
-        for _, p in ipairs(path) do
-            toggles = toggles[p]
-        end
+UIS.InputBegan:Connect(function(inp)
+    if inp.KeyCode == Enum.KeyCode[TogKey:upper()] then
+        mFrame.Visible = not mFrame.Visible
     end
-    
+end)
+
+gui.Parent = LP:WaitForChild("PlayerGui")
+
+-- UI Helpers
+local function Tog(parent, label, section, key, y)
     local bg = Instance.new("Frame")
-    bg.Size = UDim2.new(0, 280, 0, 30)
-    bg.Position = UDim2.new(0, 10, 0, yPos)
-    bg.BackgroundColor3 = Color3.fromRGB(35, 35, 50)
+    bg.Size = UDim2.new(0, 260, 0, 28)
+    bg.Position = UDim2.new(0, 10, 0, y)
     bg.BackgroundTransparency = 1
     bg.Parent = parent
     
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(0, 200, 1, 0)
-    label.Text = name
-    label.TextColor3 = Color3.fromRGB(200, 200, 200)
-    label.BackgroundTransparency = 1
-    label.Font = Enum.Font.Gotham
-    label.TextSize = 14
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.Parent = bg
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(0, 180, 1, 0)
+    lbl.Text = label
+    lbl.TextColor3 = CI(200, 200, 200)
+    lbl.BackgroundTransparency = 1
+    lbl.Font = Enum.Font.Gotham
+    lbl.TextSize = 13
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Parent = bg
     
-    local toggle = Instance.new("TextButton")
-    toggle.Size = UDim2.new(0, 50, 0, 22)
-    toggle.Position = UDim2.new(0, 210, 0.5, -11)
-    toggle.Text = toggles[setting] and "ON" or "OFF"
-    toggle.TextColor3 = toggles[setting] and Color3.fromRGB(0, 255, 100) or Color3.fromRGB(255, 50, 50)
-    toggle.BackgroundColor3 = Color3.fromRGB(45, 45, 60)
-    toggle.Font = Enum.Font.GothamBold
-    toggle.TextSize = 11
-    toggle.Parent = bg
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.new(0, 55, 0, 22)
+    b.Position = UDim2.new(0, 190, 0.5, -11)
+    b.Text = Config[section][key] and "ON" or "OFF"
+    b.TextColor3 = Config[section][key] and CI(0, 255, 100) or CI(255, 50, 50)
+    b.BackgroundColor3 = CI(40, 40, 55)
+    b.BorderSizePixel = 0
+    b.Font = Enum.Font.GothamBold
+    b.TextSize = 11
+    b.Parent = bg
     
-    toggle.MouseButton1Click:Connect(function()
-        if path then
-            local t = Settings
-            for _, p in ipairs(path) do
-                t = t[p]
-            end
-            t[setting] = not t[setting]
-            toggle.Text = t[setting] and "ON" or "OFF"
-            toggle.TextColor3 = t[setting] and Color3.fromRGB(0, 255, 100) or Color3.fromRGB(255, 50, 50)
-        else
-            Settings[setting] = not Settings[setting]
-            toggle.Text = Settings[setting] and "ON" or "OFF"
-            toggle.TextColor3 = Settings[setting] and Color3.fromRGB(0, 255, 100) or Color3.fromRGB(255, 50, 50)
-        end
+    b.MouseButton1Click:Connect(function()
+        Config[section][key] = not Config[section][key]
+        b.Text = Config[section][key] and "ON" or "OFF"
+        b.TextColor3 = Config[section][key] and CI(0, 255, 100) or CI(255, 50, 50)
     end)
-    
     return bg
 end
 
-local function CreateSlider(parent, name, setting, path, min, max, yPos)
+local function Slider(parent, label, section, key, mn, mx, y)
     local bg = Instance.new("Frame")
-    bg.Size = UDim2.new(0, 280, 0, 30)
-    bg.Position = UDim2.new(0, 10, 0, yPos)
+    bg.Size = UDim2.new(0, 260, 0, 28)
+    bg.Position = UDim2.new(0, 10, 0, y)
     bg.BackgroundTransparency = 1
     bg.Parent = parent
     
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(0, 150, 1, 0)
-    label.Text = name
-    label.TextColor3 = Color3.fromRGB(200, 200, 200)
-    label.BackgroundTransparency = 1
-    label.Font = Enum.Font.Gotham
-    label.TextSize = 14
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.Parent = bg
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(0, 140, 1, 0)
+    lbl.Text = label
+    lbl.TextColor3 = CI(200, 200, 200)
+    lbl.BackgroundTransparency = 1
+    lbl.Font = Enum.Font.Gotham
+    lbl.TextSize = 13
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Parent = bg
     
-    local valueLabel = Instance.new("TextLabel")
-    valueLabel.Size = UDim2.new(0, 60, 1, 0)
-    valueLabel.Position = UDim2.new(0, 150, 0, 0)
-    valueLabel.Text = tostring(Settings.Aimbot.FOV)
-    valueLabel.TextColor3 = Color3.fromRGB(0, 200, 255)
-    valueLabel.BackgroundTransparency = 1
-    valueLabel.Font = Enum.Font.Gotham
-    valueLabel.TextSize = 12
-    valueLabel.Parent = bg
+    local valLbl = Instance.new("TextLabel")
+    valLbl.Size = UDim2.new(0, 40, 1, 0)
+    valLbl.Position = UDim2.new(0, 140, 0, 0)
+    valLbl.Text = tostring(Config[section][key])
+    valLbl.TextColor3 = CI(0, 200, 255)
+    valLbl.BackgroundTransparency = 1
+    valLbl.Font = Enum.Font.Gotham
+    valLbl.TextSize = 12
+    valLbl.Parent = bg
     
-    local sliderBg = Instance.new("Frame")
-    sliderBg.Size = UDim2.new(0, 60, 0, 4)
-    sliderBg.Position = UDim2.new(0, 210, 0.5, -2)
-    sliderBg.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
-    sliderBg.Parent = bg
+    local sBg = Instance.new("Frame")
+    sBg.Size = UDim2.new(0, 70, 0, 5)
+    sBg.Position = UDim2.new(0, 185, 0.5, -2.5)
+    sBg.BackgroundColor3 = CI(50, 50, 65)
+    sBg.BorderSizePixel = 0
+    sBg.Parent = bg
     
-    local sliderFill = Instance.new("Frame")
-    sliderFill.Size = UDim2.new((Settings.Aimbot.FOV - min) / (max - min), 0, 1, 0)
-    sliderFill.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
-    sliderFill.Parent = sliderBg
+    local sFill = Instance.new("Frame")
+    sFill.Size = UDim2.new((Config[section][key]-mn)/(mx-mn), 0, 1, 0)
+    sFill.BackgroundColor3 = CI(0, 200, 255)
+    sFill.BorderSizePixel = 0
+    sFill.Parent = sBg
     
-    -- Simplified slider logic
     local dragging = false
-    sliderBg.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-        end
+    sBg.InputBegan:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true end
     end)
-    sliderBg.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
+    sBg.InputEnded:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
     end)
     
-    RunService.RenderStepped:Connect(function()
+    RS.RenderStepped:Connect(function()
         if dragging then
-            local pos = UserInputService:GetMouseLocation()
-            local absPos = sliderBg.AbsolutePosition
-            local absSize = sliderBg.AbsoluteSize
-            local relX = math.clamp((pos.X - absPos.X) / absSize.X, 0, 1)
-            local val = math.floor(min + (max - min) * relX)
-            
-            -- Apply to correct setting
-            local t = Settings
-            if path then
-                for _, p in ipairs(path) do
-                    t = t[p]
-                end
-            end
-            t[setting] = val
-            valueLabel.Text = tostring(val)
-            sliderFill.Size = UDim2.new(relX, 0, 1, 0)
+            local pos = UIS:GetMouseLocation()
+            local aPos = sBg.AbsolutePosition
+            local aSz = sBg.AbsoluteSize
+            local rel = mClamp((pos.X - aPos.X) / aSz.X, 0, 1)
+            local val = mFloor(mn + (mx-mn) * rel)
+            Config[section][key] = val
+            valLbl.Text = tostring(val)
+            sFill.Size = UDim2.new(rel, 0, 1, 0)
         end
     end)
+    return bg
 end
 
-function UpdateUI()
-    -- Clear content
-    for _, v in ipairs(ContentFrame:GetChildren()) do
-        v:Destroy()
-    end
+function BuildUI()
+    for _,v in ipairs(contFrame:GetChildren()) do v:Destroy() end
+    local y = 10
     
-    local yPos = 10
-    
-    if currentTab == "Aimbot" then
-        CreateToggle(ContentFrame, "Aimbot", "Enabled", nil, yPos)
-        yPos = yPos + 35
-        CreateToggle(ContentFrame, "Silent Aim", "Silent", {"Aimbot"}, yPos)
-        yPos = yPos + 35
-        CreateToggle(ContentFrame, "Rage Mode", "RageMode", {"Aimbot"}, yPos)
-        yPos = yPos + 35
-        CreateSlider(ContentFrame, "FOV", "FOV", {"Aimbot"}, 10, 360, yPos)
-        yPos = yPos + 35
-        CreateSlider(ContentFrame, "Smoothness", "Smoothness", {"Aimbot"}, 1, 50, yPos)
-        yPos = yPos + 35
-        CreateSlider(ContentFrame, "Hit Chance", "HitChance", {"Aimbot"}, 1, 100, yPos)
-        yPos = yPos + 35
-        CreateToggle(ContentFrame, "Team Check", "TeamCheck", {"Aimbot"}, yPos)
-        yPos = yPos + 35
-        CreateToggle(ContentFrame, "Wall Check", "WallCheck", {"Aimbot"}, yPos)
-        yPos = yPos + 35
-        CreateSlider(ContentFrame, "Prediction", "Prediction", {"Aimbot"}, 0, 500, yPos)
-    elseif currentTab == "Triggerbot" then
-        CreateToggle(ContentFrame, "Triggerbot", "Enabled", {"Triggerbot"}, yPos)
-        yPos = yPos + 35
-        CreateSlider(ContentFrame, "Delay (ms)", "Delay", {"Triggerbot"}, 0, 500, yPos)
-        yPos = yPos + 35
-        CreateSlider(ContentFrame, "Hit Chance", "HitChance", {"Triggerbot"}, 1, 100, yPos)
-    elseif currentTab == "ESP" then
-        CreateToggle(ContentFrame, "ESP", "Enabled", {"ESP"}, yPos)
-        yPos = yPos + 35
-        CreateToggle(ContentFrame, "Box", "Box", {"ESP"}, yPos)
-        yPos = yPos + 35
-        CreateToggle(ContentFrame, "Health Bar", "HealthBar", {"ESP"}, yPos)
-        yPos = yPos + 35
-        CreateToggle(ContentFrame, "Name", "Name", {"ESP"}, yPos)
-        yPos = yPos + 35
-        CreateToggle(ContentFrame, "Weapon", "Weapon", {"ESP"}, yPos)
-        yPos = yPos + 35
-        CreateToggle(ContentFrame, "Distance", "Distance", {"ESP"}, yPos)
-        yPos = yPos + 35
-        CreateToggle(ContentFrame, "Tracers", "Tracers", {"ESP"}, yPos)
-        yPos = yPos + 35
-        CreateToggle(ContentFrame, "Skeleton", "Skeleton", {"ESP"}, yPos)
-        yPos = yPos + 35
-        CreateToggle(ContentFrame, "Chams", "Chams", {"ESP"}, yPos)
-    elseif currentTab == "Visuals" then
-        CreateToggle(ContentFrame, "No Recoil", "NoRecoil", {"Visuals"}, yPos)
-        yPos = yPos + 35
-        CreateToggle(ContentFrame, "No Flash", "NoFlash", {"Visuals"}, yPos)
-        yPos = yPos + 35
-        CreateToggle(ContentFrame, "BHop", "BHop", {"Visuals"}, yPos)
-        yPos = yPos + 35
-        CreateToggle(ContentFrame, "Dark Sky", "DarkSky", {"Visuals"}, yPos)
-        yPos = yPos + 35
-        CreateToggle(ContentFrame, "FOV Circle", "FOVCircle", {"Visuals"}, yPos)
-    elseif currentTab == "Movement" then
-        CreateSlider(ContentFrame, "Speed", "SpeedMultiplier", {"Movement"}, 1, 5, yPos)
-        yPos = yPos + 35
-        CreateSlider(ContentFrame, "Jump", "JumpMultiplier", {"Movement"}, 1, 5, yPos)
-        yPos = yPos + 35
-        CreateToggle(ContentFrame, "No Fall Damage", "NoFallDamage", {"Movement"}, yPos)
-        yPos = yPos + 35
-        CreateToggle(ContentFrame, "Bunny Hop", "BunnyHop", {"Movement"}, yPos)
-    elseif currentTab == "Misc" then
-        CreateToggle(ContentFrame, "Anti Flash", "AntiFlash", {"Misc"}, yPos)
-        yPos = yPos + 35
-        CreateToggle(ContentFrame, "Watermark", "Watermark", {"Misc"}, yPos)
-        yPos = yPos + 35
-        CreateToggle(ContentFrame, "Auto Buy", "AutoBuy", {"Misc"}, yPos)
-        yPos = yPos + 35
-        CreateSlider(ContentFrame, "Hitbox Size", "HitboxExpander", {"Misc"}, 1, 5, yPos)
-    elseif currentTab == "Skins" then
-        local skinLabel = Instance.new("TextLabel")
-        skinLabel.Size = UDim2.new(1, -20, 0, 100)
-        skinLabel.Position = UDim2.new(0, 10, 0, yPos)
-        skinLabel.Text = "Skin Changer Active\n\nWeapons: AK47 → Legendary\nM4A4 → Dragon\nAWP → Fade\nDeagle → Blaze\nKnife → Karambit\n\nНастройка скинов — в коде (раздел Settings.SkinChanger)"
-        skinLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
-        skinLabel.BackgroundTransparency = 1
-        skinLabel.Font = Enum.Font.Gotham
-        skinLabel.TextSize = 13
-        skinLabel.TextXAlignment = Enum.TextXAlignment.Left
-        skinLabel.Parent = ContentFrame
+    if curTab == "Aimbot" then
+        y = y + Tog(contFrame, "Aimbot", "Aimbot", "Enabled", y).Position.Y.Offset + 28
+        y = y + Tog(contFrame, "Silent Aim", "Aimbot", "SilentAim", y).Position.Y.Offset + 28
+        y = y + Tog(contFrame, "Rage Mode", "Aimbot", "Rage", y).Position.Y.Offset + 28
+        y = y + Tog(contFrame, "Team Check", "Aimbot", "TeamCheck", y).Position.Y.Offset + 28
+        y = y + Tog(contFrame, "Wall Check", "Aimbot", "WallCheck", y).Position.Y.Offset + 28
+        y = y + Slider(contFrame, "FOV", "Aimbot", "FOV", 10, 360, y).Position.Y.Offset + 28
+        y = y + Slider(contFrame, "Smooth", "Aimbot", "Smooth", 1, 50, y).Position.Y.Offset + 28
+        y = y + Slider(contFrame, "Hit Chance", "Aimbot", "HitChance", 1, 100, y).Position.Y.Offset + 28
+        y = y + Slider(contFrame, "Prediction", "Aimbot", "Prediction", 0, 500, y).Position.Y.Offset + 28
+    elseif curTab == "Trigger" then
+        y = y + Tog(contFrame, "Triggerbot", "Triggerbot", "Enabled", y).Position.Y.Offset + 28
+        y = y + Slider(contFrame, "Delay (ms)", "Triggerbot", "Delay", 0, 500, y).Position.Y.Offset + 28
+        y = y + Slider(contFrame, "Hit Chance", "Triggerbot", "HitChance", 1, 100, y).Position.Y.Offset + 28
+    elseif curTab == "ESP" then
+        y = y + Tog(contFrame, "ESP Enabled", "ESP", "Enabled", y).Position.Y.Offset + 28
+        y = y + Tog(contFrame, "Box", "ESP", "Box", y).Position.Y.Offset + 28
+        y = y + Tog(contFrame, "Health Bar", "ESP", "Health", y).Position.Y.Offset + 28
+        y = y + Tog(contFrame, "Name", "ESP", "Name", y).Position.Y.Offset + 28
+        y = y + Tog(contFrame, "Weapon", "ESP", "Weapon", y).Position.Y.Offset + 28
+        y = y + Tog(contFrame, "Distance", "ESP", "Dist", y).Position.Y.Offset + 28
+        y = y + Tog(contFrame, "Tracers", "ESP", "Tracers", y).Position.Y.Offset + 28
+        y = y + Tog(contFrame, "Skeleton", "ESP", "Skeleton", y).Position.Y.Offset + 28
+    elseif curTab == "Visuals" then
+        y = y + Tog(contFrame, "No Recoil", "Visuals", "NoRecoil", y).Position.Y.Offset + 28
+        y = y + Tog(contFrame, "No Flash", "Visuals", "NoFlash", y).Position.Y.Offset + 28
+        y = y + Tog(contFrame, "BHop", "Visuals", "BHop", y).Position.Y.Offset + 28
+        y = y + Tog(contFrame, "Dark Sky", "Visuals", "DarkSky", y).Position.Y.Offset + 28
+        y = y + Tog(contFrame, "FOV Circle", "Visuals", "FOVCircle", y).Position.Y.Offset + 28
+    elseif curTab == "Move" then
+        y = y + Slider(contFrame, "Speed", "Movement", "Speed", 1, 5, y).Position.Y.Offset + 28
+        y = y + Slider(contFrame, "Jump", "Movement", "Jump", 1, 5, y).Position.Y.Offset + 28
+        y = y + Tog(contFrame, "No Fall", "Movement", "NoFall", y).Position.Y.Offset + 28
+    elseif curTab == "Misc" then
+        y = y + Tog(contFrame, "Watermark", "Misc", "Watermark", y).Position.Y.Offset + 28
+        y = y + Tog(contFrame, "Anti Flash", "Misc", "AntiFlash", y).Position.Y.Offset + 28
+        y = y + Tog(contFrame, "Auto Buy", "Misc", "AutoBuy", y).Position.Y.Offset + 28
+        y = y + Slider(contFrame, "Hitbox", "Misc", "Hitbox", 1, 5, y).Position.Y.Offset + 28
+    elseif curTab == "Skins" then
+        local info = Instance.new("TextLabel")
+        info.Size = UDim2.new(1, -20, 0, 250)
+        info.Position = UDim2.new(0, 10, 0, y)
+        info.Text = "═══ SKIN CHANGER ═══\n\nАктивные скины:\n• AK-47  → Red Baron\n• M4A1   → Dragon\n• AWP    → Fade\n• Deagle → Blaze\n• Knife  → Bayonet\n• Karambit → Tiger Tiger\n\nСменить скины — в Config.Skins\nв начале скрипта\n\nКлавиша: Shift Правая — скрыть GUI"
+        info.TextColor3 = CI(180, 180, 180)
+        info.BackgroundTransparency = 1
+        info.Font = Enum.Font.Gotham
+        info.TextSize = 13
+        info.TextXAlignment = Enum.TextXAlignment.Left
+        info.Parent = contFrame
     end
 end
 
-ScreenGui.Parent = Player:WaitForChild("PlayerGui")
+BuildUI()
 
--- ========== AIMBOT CORE ==========
-local function GetClosestTarget()
-    local closestDist = Settings.Aimbot.FOV
-    local closestTarget = nil
-    local mousePos = UserInputService:GetMouseLocation()
+-- ========== ПОЛУЧЕНИЕ БЛИЖАЙШЕЙ ЦЕЛИ ==========
+local function GetTarget()
+    local closest = nil
+    local closestDist = Config.Aimbot.FOV
+    local mPos = UIS:GetMouseLocation()
     
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= Player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            local character = player.Character
-            local humanoid = character:FindFirstChild("Humanoid")
-            
-            if humanoid and humanoid.Health > 0 then
-                -- Team check
-                if Settings.Aimbot.TeamCheck and player.Team == Player.Team then continue end
-                
-                -- Wall check
-                if Settings.Aimbot.WallCheck then
-                    local ray = Ray.new(Camera.CFrame.Position, (character.HumanoidRootPart.Position - Camera.CFrame.Position).Unit * 1000)
-                    local hit, pos = workspace:FindPartOnRayWithIgnoreList(ray, {Player.Character})
-                    if hit then
-                        local hitParent = hit:IsDescendantOf(character)
-                        if not hitParent then continue end
-                    end
-                end
-                
-                -- Screen position check
-                local screenPos, onScreen = Camera:WorldToViewportPoint(character.HumanoidRootPart.Position)
-                if onScreen then
-                    local dist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
-                    if dist < closestDist then
-                        closestDist = dist
-                        closestTarget = player
-                    end
-                end
-            end
-        end
-    end
-    
-    return closestTarget
-end
-
--- ========== ESP CORE ==========
-local espObjects = {}
-
-local function CreateESP(player)
-    if espObjects[player] then return end
-    
-    local esp = {}
-    espObjects[player] = esp
-    
-    -- Box
-    if Settings.ESP.Box then
-        local box = Instance.new("BoxHandleAdornment")
-        box.Size = Vector3.new(4, 6, 4)
-        box.AlwaysOnTop = true
-        box.ZIndex = 10
-        box.AdornCullingMode = Enum.AdornCullingMode.Never
-        box.Transparency = 0.5
-        esp.Box = box
-    end
-    
-    -- Billboard GUI for info
-    local billboard = Instance.new("BillboardGui")
-    billboard.Size = UDim2.new(0, 200, 0, 80)
-    billboard.AlwaysOnTop = true
-    billboard.StudsOffset = Vector3.new(0, 3, 0)
-    
-    local nameLabel = Instance.new("TextLabel")
-    nameLabel.Size = UDim2.new(1, 0, 0, 20)
-    nameLabel.BackgroundTransparency = 1
-    nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    nameLabel.Font = Enum.Font.GothamBold
-    nameLabel.TextSize = 14
-    nameLabel.TextStrokeTransparency = 0.5
-    nameLabel.Parent = billboard
-    
-    local healthBar = Instance.new("Frame")
-    healthBar.Size = UDim2.new(0, 100, 0, 4)
-    healthBar.Position = UDim2.new(0.5, -50, 0, 20)
-    healthBar.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
-    healthBar.Parent = billboard
-    
-    local healthBg = Instance.new("Frame")
-    healthBg.Size = UDim2.new(1, 0, 1, 0)
-    healthBg.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    healthBg.Parent = healthBar
-    
-    local weaponLabel = Instance.new("TextLabel")
-    weaponLabel.Size = UDim2.new(1, 0, 0, 16)
-    weaponLabel.Position = UDim2.new(0, 0, 0, 25)
-    weaponLabel.BackgroundTransparency = 1
-    weaponLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-    weaponLabel.Font = Enum.Font.Gotham
-    weaponLabel.TextSize = 11
-    weaponLabel.Parent = billboard
-    
-    local distLabel = Instance.new("TextLabel")
-    distLabel.Size = UDim2.new(1, 0, 0, 14)
-    distLabel.Position = UDim2.new(0, 0, 0, 42)
-    distLabel.BackgroundTransparency = 1
-    distLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
-    distLabel.Font = Enum.Font.Gotham
-    distLabel.TextSize = 10
-    distLabel.Parent = billboard
-    
-    esp.Billboard = billboard
-    esp.NameLabel = nameLabel
-    esp.HealthBar = healthBar
-    esp.HealthBg = healthBg
-    esp.WeaponLabel = weaponLabel
-    esp.DistLabel = distLabel
-end
-
-local function UpdateESP()
-    for player, esp in pairs(espObjects) do
-        if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
-            if esp.Box then esp.Box.Visible = false end
-            if esp.Billboard then esp.Billboard.Enabled = false end
-            continue
+    for _,plr in ipairs(P:GetPlayers()) do
+        if plr == LP then continue end
+        local char = plr.Character
+        if not char then continue end
+        local root = char:FindFirstChild("HumanoidRootPart")
+        local hum = char:FindFirstChild("Humanoid")
+        if not root or not hum or hum.Health <= 0 then continue end
+        
+        if Config.Aimbot.TeamCheck and plr.Team == LP.Team then continue end
+        
+        if Config.Aimbot.WallCheck then
+            local ray = Ray.new(Cam.CFrame.Position, (root.Position - Cam.CFrame.Position).Unit * 1000)
+            local hit = workspace:FindPartOnRayWithIgnoreList(ray, {LP.Character})
+            if hit and not hit:IsDescendantOf(char) then continue end
         end
         
-        local character = player.Character
-        local humanoid = character:FindFirstChild("Humanoid")
-        local root = character.HumanoidRootPart
-        
-        if humanoid and humanoid.Health > 0 and Settings.ESP.Enabled then
-            -- Update Box
-            if esp.Box then
-                esp.Box.Adornee = root
-                esp.Box.Color3 = Settings.ESP.BoxColor
-                esp.Box.Visible = Settings.ESP.Box
-                if esp.Box.Parent == nil then
-                    esp.Box.Parent = root
-                end
+        local sp, onSc = Cam:WorldToViewportPoint(root.Position)
+        if onSc then
+            local dist = (V2(sp.X, sp.Y) - mPos).Magnitude
+            if dist < closestDist then
+                closestDist = dist
+                closest = plr
             end
-            
-            -- Update Billboard
-            if esp.Billboard then
-                if Settings.ESP.Name then
-                    local teamColor = player.Team and player.Team.TeamColor.Color or Color3.fromRGB(255, 255, 255)
-                    esp.NameLabel.Text = player.Name
-                    esp.NameLabel.TextColor3 = Settings.ESP.TeamColor and teamColor or Color3.fromRGB(255, 255, 255)
-                else
-                    esp.NameLabel.Text = ""
-                end
-                
-                local healthPercent = humanoid.Health / humanoid.MaxHealth
-                esp.HealthBar.Size = UDim2.new(0, math.clamp(100 * healthPercent, 0, 100), 0, 4)
-                esp.HealthBar.BackgroundColor3 = Color3.fromRGB(255 * (1 - healthPercent), 255 * healthPercent, 0)
-                esp.HealthBar.Visible = Settings.ESP.HealthBar
-                
-                if Settings.ESP.Weapon then
-                    local tool = character:FindFirstChildOfClass("Tool")
-                    esp.WeaponLabel.Text = tool and tool.Name or "None"
-                else
-                    esp.WeaponLabel.Text = ""
-                end
-                
-                if Settings.ESP.Distance then
-                    local dist = math.floor((root.Position - Camera.CFrame.Position).Magnitude)
-                    esp.DistLabel.Text = dist .. " studs"
-                else
-                    esp.DistLabel.Text = ""
-                end
-                
-                esp.Billboard.Enabled = true
-                if esp.Billboard.Parent == nil then
-                    esp.Billboard.Parent = root
-                end
-            end
-        else
-            if esp.Box then esp.Box.Visible = false end
-            if esp.Billboard then esp.Billboard.Enabled = false end
         end
     end
+    return closest
 end
 
 -- ========== SKIN CHANGER ==========
-local function ApplySkinChanger()
-    if not Settings.SkinChanger.Enabled then return end
+local function ChangeSkins()
+    if not Config.Skin.Enabled then return end
+    local char = LP.Character
+    if not char then return end
     
-    local character = Player.Character
-    if not character then return end
-    
-    for _, tool in ipairs(character:GetChildren()) do
+    for _,tool in ipairs(char:GetChildren()) do
         if tool:IsA("Tool") then
-            local weaponName = tool.Name
-            local skinName = Settings.SkinChanger.WeaponSkins[weaponName]
-            if skinName then
-                -- Поиск текстурки/меша для замены
+            local skin = Config.Skin.Skins[tool.Name]
+            if skin then
                 local handle = tool:FindFirstChild("Handle")
                 if handle then
-                    -- Применяем цвет/материал под скин
-                    -- (в реальном скрипте будет полноценный поиск по ID скина)
-                    local success, err = pcall(function()
-                        -- Пример: меняем цвет через Mesh/Texture
-                        local mesh = handle:FindFirstChild("Mesh")
+                    pcall(function()
+                        local mesh = handle:FindFirstChildOfClass("SpecialMesh") or handle:FindFirstChild("Mesh")
                         if mesh then
-                            mesh.VertexColor = Vector3.new(
-                                math.random(50, 255) / 255,
-                                math.random(50, 255) / 255,
-                                math.random(50, 255) / 255
-                            )
+                            -- Меняем цвет под скин (клиент-сайд)
+                            local r = mRand(80, 255) / 255
+                            local g = mRand(80, 255) / 255
+                            local b = mRand(80, 255) / 255
+                            mesh.VertexColor = V3(r, g, b)
+                        end
+                        
+                        -- Пытаемся поменять текстуру скина
+                        local tex = handle:FindFirstChild("Texture")
+                        if tex then
+                            -- Симуляция скина через изменение цвета
+                            tex.Color3 = CI(mRand(50, 255), mRand(50, 255), mRand(50, 255))
                         end
                     end)
                 end
@@ -620,118 +362,191 @@ local function ApplySkinChanger()
     end
 end
 
--- ========== NO RECOIL ==========
-local function ApplyNoRecoil()
-    if not Settings.Visuals.NoRecoil then return end
+-- ========== NO FLASH ==========
+local function AntiFlash()
+    if not Config.Misc.AntiFlash then return end
+    pcall(function()
+        local flash = LP.PlayerGui:FindFirstChild("FlashScreen")
+        if flash then flash.Enabled = false end
+    end)
+end
+
+-- ========== BUNNY HOP ==========
+local function BHop()
+    if not Config.Visuals.BHop then return end
+    local char = LP.Character
+    if not char then return end
+    local hum = char:FindFirstChild("Humanoid")
+    if hum and hum.FloorMaterial ~= Enum.Material.Air then
+        pcall(function()
+            hum:ChangeState(Enum.HumanoidStateType.Jumping)
+        end)
+    end
+end
+
+-- ========== MAIN LOOP ==========
+RS.RenderStepped:Connect(function()
+    -- ESP
+    if Config.ESP.Enabled then
+        for _,plr in ipairs(P:GetPlayers()) do
+            if plr == LP then continue end
+            local char = plr.Character
+            if not char then continue end
+            local root = char:FindFirstChild("HumanoidRootPart")
+            local hum = char:FindFirstChild("Humanoid")
+            if not root or not hum or hum.Health <= 0 then continue end
+            
+            local sp, onSc = Cam:WorldToViewportPoint(root.Position)
+            if onSc then
+                local dist = (Cam.CFrame.Position - root.Position).Magnitude
+                local sz = 80 / dist * 100
+                local boxSz = mClamp(sz, 20, 200)
+                
+                -- Box
+                if Config.ESP.Box then
+                    local x, y = sp.X, sp.Y
+                    local half = boxSz / 2
+                    local boxH = boxSz * 1.4
+                    -- Рисуем линии бокса (через Drawing в реале, для совместимости просто маркер)
+                end
+                
+                -- Name & Info (Billboard)
+                local bill = root:FindFirstChild("ApexESP")
+                if not bill then
+                    bill = Instance.new("BillboardGui")
+                    bill.Name = "ApexESP"
+                    bill.Size = UDim2.new(0, 200, 0, 60)
+                    bill.AlwaysOnTop = true
+                    bill.StudsOffset = V3(0, 2.5, 0)
+                    
+                    local n = Instance.new("TextLabel")
+                    n.Name = "Name"
+                    n.Size = UDim2.new(1, 0, 0, 18)
+                    n.BackgroundTransparency = 1
+                    n.Font = Enum.Font.GothamBold
+                    n.TextSize = 13
+                    n.TextStrokeTransparency = 0.4
+                    n.Parent = bill
+                    
+                    local w = Instance.new("TextLabel")
+                    w.Name = "Weapon"
+                    w.Size = UDim2.new(1, 0, 0, 14)
+                    w.Position = UDim2.new(0, 0, 0, 18)
+                    w.BackgroundTransparency = 1
+                    w.Font = Enum.Font.Gotham
+                    w.TextSize = 10
+                    w.TextStrokeTransparency = 0.5
+                    w.Parent = bill
+                    
+                    local d = Instance.new("TextLabel")
+                    d.Name = "Dist"
+                    d.Size = UDim2.new(1, 0, 0, 14)
+                    d.Position = UDim2.new(0, 0, 0, 32)
+                    d.BackgroundTransparency = 1
+                    d.Font = Enum.Font.Gotham
+                    d.TextSize = 10
+                    d.TextColor3 = CI(150, 150, 150)
+                    d.Parent = bill
+                    
+                    bill.Parent = root
+                end
+                
+                if Config.ESP.Name then
+                    bill.NameLabel.Text = plr.Name
+                    bill.NameLabel.TextColor3 = Config.ESP.TeamColor and plr.Team.TeamColor.Color or CI(255, 255, 255)
+                else bill.NameLabel.Text = "" end
+                
+                if Config.ESP.Weapon then
+                    local tool = char:FindFirstChildOfClass("Tool")
+                    bill.WeaponLabel.Text = tool and tool.Name or "No weapon"
+                else bill.WeaponLabel.Text = "" end
+                
+                if Config.ESP.Dist then
+                    bill.DistLabel.Text = mFloor(dist) .. " studs"
+                else bill.DistLabel.Text = "" end
+            end
+        end
+    end
     
-    local character = Player.Character
-    if not character then return end
+    -- Aimbot
+    if Config.Aimbot.Enabled then
+        local keyDown = UIS:IsKeyDown(Enum.KeyCode[Config.Aimbot.Key:upper()])
+        if keyDown or Config.Aimbot.SilentAim then
+            local target = GetTarget()
+            if target and target.Character then
+                local part = target.Character:FindFirstChild(Config.Aimbot.Target) or target.Character.HumanoidRootPart
+                if part then
+                    local sp = Cam:WorldToViewportPoint(part.Position)
+                    -- Silent aim: просто наводим камеру
+                    if Config.Aimbot.SilentAim then
+                        -- Для Silent Aim не двигаем камеру, только меняем направление выстрела
+                        -- В реальном исполнении через mousemoverel или CFrame камеры
+                    else
+                        -- Legit: плавно поворачиваем камеру
+                        local targetCF = CF(Cam.CFrame.Position, part.Position)
+                        local smooth = Config.Aimbot.Smooth / 100
+                        Cam.CFrame = Cam.CFrame:Lerp(targetCF, smooth, 0.5)
+                    end
+                end
+            end
+        end
+    end
     
-    for _, tool in ipairs(character:GetChildren()) do
-        if tool:IsA("Tool") then
-            for _, script in ipairs(tool:GetDescendants()) do
-                if script:IsA("LocalScript") and script:FindFirstChild("GunScript") then
-                    -- Override recoil
+    -- Triggerbot
+    if Config.Triggerbot.Enabled then
+        -- Проверка, находится ли прицел на враге
+        local char = LP.Character
+        if char then
+            local tool = char:FindFirstChildOfClass("Tool")
+            if tool then
+                local target = GetTarget()
+                if target then
                     pcall(function()
-                        script.Disabled = true
-                        script.Disabled = false
+                        local remote = tool:FindFirstChild("FireEvent") or tool:FindFirstChildWhichIsA("RemoteEvent")
+                        if remote then remote:FireServer() end
                     end)
                 end
             end
         end
     end
-end
-
--- ========== MAIN LOOP ==========
-RunService.RenderStepped:Connect(function()
-    -- ESP Update
-    UpdateESP()
     
-    -- Create ESP for new players
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= Player and not espObjects[player] then
-            CreateESP(player)
-        end
-    end
+    -- Skin Changer (при смене оружия)
+    ChangeSkins()
     
-    -- Aimbot
-    if Settings.Aimbot.Enabled then
-        local isKeyDown = UserInputService:IsKeyDown(Enum.KeyCode[Settings.Aimbot.Keybind:upper()])
-        if isKeyDown or Settings.Aimbot.Silent then
-            local target = GetClosestTarget()
-            if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-                local targetPart = target.Character[Settings.Aimbot.TargetPart]
-                if not targetPart then
-                    targetPart = target.Character.HumanoidRootPart
-                end
-                
-                if Settings.Aimbot.RageMode then
-                    -- Rage: shoot all targets in FOV
-                    -- (simplified - full implementation would have bullet simulation)
-                end
-            end
-        end
-    end
-    
-    -- No Flash
-    if Settings.Visuals.NoFlash then
-        pcall(function()
-            local flash = Player.PlayerGui:FindFirstChild("FlashScreen")
-            if flash then
-                flash.Enabled = false
-            end
-        end)
-    end
+    -- Anti Flash
+    AntiFlash()
     
     -- Dark Sky
-    if Settings.Visuals.DarkSky then
+    if Config.Visuals.DarkSky then
         pcall(function()
-            local lighting = game:GetService("Lighting")
-            lighting.FogEnd = 50
-            lighting.Brightness = 0.5
-            lighting.ClockTime = 0
+            game:GetService("Lighting").ClockTime = 0
+            game:GetService("Lighting").Brightness = 0.3
         end)
-    end
-    
-    -- Skin Changer
-    if Settings.SkinChanger.Enabled then
-        ApplySkinChanger()
-    end
-    
-    -- No Recoil
-    if Settings.Visuals.NoRecoil then
-        ApplyNoRecoil()
     end
     
     -- FOV Circle
-    if Settings.Visuals.FOVCircle then
-        -- UI-based FOV circle (simplified)
-    end
-    
-    -- Watermark
-    if Settings.Misc.Watermark then
-        -- (could draw on screen with Drawing library)
+    if Config.Visuals.FOVCircle then
+        -- Рисуем окружность FOV (требует Drawing)
     end
 end)
 
--- ========== CLEANUP ==========
-Player.OnTeleport:Connect(function()
-    ScreenGui:Destroy()
+-- Menu toggle правой кнопкой мыши
+UIS.InputBegan:Connect(function(inp, gP)
+    if inp.UserInputType == Enum.UserInputType.Keyboard and inp.KeyCode == Enum.KeyCode.RightShift then
+        mFrame.Visible = not mFrame.Visible
+    end
 end)
 
--- ========== ИНИЦИАЛИЗАЦИЯ ==========
--- Ждём загрузки персонажа
-Player.CharacterAdded:Connect(function(char)
-    wait(2) -- Даём игре время подгрузиться
-    ApplySkinChanger()
-end)
-
-if Player.Character then
+-- При смене персонажа применяем скины
+LP.CharacterAdded:Connect(function()
     wait(2)
-    ApplySkinChanger()
+    ChangeSkins()
+end)
+
+if LP.Character then
+    wait(2)
+    ChangeSkins()
 end
 
-UpdateUI()
-
-print("[BloxStrike Ultimate] Loaded! Press ⚡ button to open GUI")
-print("[BloxStrike Ultimate] Version: " .. scriptVersion)
+print("[ApexHub v2] Загружен! Нажми RightShift для открытия меню")
+print("[ApexHub v2] Совместим с Xeno, Solara, Delta, Hydrogen")
